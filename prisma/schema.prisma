@@ -1,0 +1,213 @@
+// AgroDitari — Prisma schema
+// Gjeneruar nga skema DBML · PostgreSQL (Supabase) · Next.js 16
+// Migrimi:  npx prisma migrate dev --name init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // pooled (porti 6543) — për Prisma Client
+  directUrl = env("DIRECT_URL")   // i drejtpërdrejtë (5432) — për migrimet
+}
+
+// ======================
+// FJALORË TË KONTROLLUAR
+// ======================
+enum RoleType {
+  admin
+  fermer
+}
+
+enum SeasonStatus {
+  aktiv
+  i_korrur
+  i_mbyllur
+}
+
+enum ActivityType {
+  mbjellje
+  pleherim
+  ujitje
+  sperkatje
+  prashitje
+  korrje
+  tjeter
+}
+
+enum ExpenseCategory {
+  inpute
+  pune_krahu
+  makineri
+  transport
+  qera
+  tjeter
+}
+
+enum UnitType {
+  kg
+  ton
+  liter
+  cope
+  thes
+  pakete
+  ore
+  dite
+}
+
+// ======================
+// MODELET
+// ======================
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  emri         String   @db.VarChar(120)
+  email        String   @unique @db.VarChar(160)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         RoleType @default(fermer)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  farms     Farm[]
+  reminders Reminder[]
+
+  @@map("users")
+}
+
+model Farm {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  emri        String   @db.VarChar(120)
+  vendndodhja String?  @db.VarChar(200)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parcels Parcel[]
+
+  @@unique([userId, emri]) // emri i fermës unik për çdo user
+  @@map("farms")
+}
+
+model Parcel {
+  id          String   @id @default(uuid()) @db.Uuid
+  farmId      String   @map("farm_id") @db.Uuid
+  emri        String   @db.VarChar(120)
+  siperfaqeHa Decimal  @map("siperfaqe_ha") @db.Decimal(10, 4)
+  llojiTokes  String?  @map("lloji_tokes") @db.VarChar(80)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  farm        Farm         @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  cropSeasons CropSeason[]
+
+  @@map("parcels")
+}
+
+model Crop {
+  id              String    @id @default(uuid()) @db.Uuid
+  emri            String    @unique @db.VarChar(100)
+  kategoria       String?   @db.VarChar(80)
+  njesiaStandarde UnitType? @map("njesia_standarde")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  cropSeasons CropSeason[]
+
+  @@map("crops")
+}
+
+model CropSeason {
+  id                String       @id @default(uuid()) @db.Uuid
+  parcelId          String       @map("parcel_id") @db.Uuid
+  cropId            String       @map("crop_id") @db.Uuid
+  sezoni            String       @db.VarChar(60)
+  status            SeasonStatus @default(aktiv)
+  dataMbjelljes     DateTime?    @map("data_mbjelljes") @db.Date
+  dataKorrjesPritur DateTime?    @map("data_korrjes_pritur") @db.Date
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  parcel     Parcel     @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+  crop       Crop       @relation(fields: [cropId], references: [id])
+  activities Activity[]
+  expenses   Expense[]
+  harvests   Harvest[]
+  reminders  Reminder[]
+
+  @@map("crop_seasons")
+}
+
+model Activity {
+  id           String       @id @default(uuid()) @db.Uuid
+  cropSeasonId String       @map("crop_season_id") @db.Uuid
+  lloji        ActivityType
+  data         DateTime     @db.Date
+  shenime      String? // ditari i punimeve në fushë
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  cropSeason CropSeason @relation(fields: [cropSeasonId], references: [id], onDelete: Cascade)
+
+  @@map("activities")
+}
+
+model Input {
+  id         String   @id @default(uuid()) @db.Uuid
+  emri       String   @db.VarChar(120)
+  kategoria  String?  @db.VarChar(80)
+  njesia     UnitType
+  cmimiNjesi Decimal? @map("cmimi_njesi") @db.Decimal(12, 2)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  expenses Expense[]
+
+  @@map("inputs")
+}
+
+model Expense {
+  id           String          @id @default(uuid()) @db.Uuid
+  cropSeasonId String          @map("crop_season_id") @db.Uuid
+  inputId      String?         @map("input_id") @db.Uuid // null nëse s'lidhet me input
+  kategoria    ExpenseCategory
+  pershkrimi   String?         @db.VarChar(200)
+  sasia        Decimal?        @db.Decimal(12, 3)
+  cmimiNjesi   Decimal?        @map("cmimi_njesi") @db.Decimal(12, 2)
+  shuma        Decimal         @db.Decimal(12, 2) // totali i shpenzimit
+  data         DateTime        @db.Date
+  createdAt    DateTime        @default(now()) @map("created_at")
+
+  cropSeason CropSeason @relation(fields: [cropSeasonId], references: [id], onDelete: Cascade)
+  input      Input?     @relation(fields: [inputId], references: [id])
+
+  @@map("expenses")
+}
+
+model Harvest {
+  id           String   @id @default(uuid()) @db.Uuid
+  cropSeasonId String   @map("crop_season_id") @db.Uuid
+  sasia        Decimal  @db.Decimal(12, 3)
+  njesia       UnitType
+  cmimiNjesi   Decimal? @map("cmimi_njesi") @db.Decimal(12, 2)
+  teArdhura    Decimal? @map("te_ardhura") @db.Decimal(12, 2)
+  data         DateTime @db.Date
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  cropSeason CropSeason @relation(fields: [cropSeasonId], references: [id], onDelete: Cascade)
+
+  @@map("harvests")
+}
+
+model Reminder {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  cropSeasonId String?  @map("crop_season_id") @db.Uuid // opsional
+  titulli      String   @db.VarChar(160)
+  pershkrimi   String?
+  afati        DateTime @db.Date
+  eKryer       Boolean  @default(false) @map("e_kryer")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cropSeason CropSeason? @relation(fields: [cropSeasonId], references: [id], onDelete: SetNull)
+
+  @@map("reminders")
+}
