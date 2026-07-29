@@ -1,4 +1,4 @@
-import type { ZodType } from "zod";
+import { z, type ZodType } from "zod";
 
 export type ValidationResult<T> =
   | { success: true; data: T }
@@ -23,3 +23,14 @@ export function validate<T>(
 
   return { success: false, errors };
 }
+
+const PASSWORD_POLICY_MESSAGE =
+  "Fjalëkalimi duhet të ketë të paktën 8 shenja, me shkronja dhe numra.";
+
+// Shared password policy — reused by register and password reset so both
+// flows enforce the exact same rule.
+export const PasswordSchema = z
+  .string()
+  .min(8, PASSWORD_POLICY_MESSAGE)
+  .regex(/[A-Za-z]/, PASSWORD_POLICY_MESSAGE)
+  .regex(/[0-9]/, PASSWORD_POLICY_MESSAGE);

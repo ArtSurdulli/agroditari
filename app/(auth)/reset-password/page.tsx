@@ -1,40 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { Tractor, User, Mail, Lock, Eye, EyeOff, MailCheck } from "lucide-react";
-import { registerUser } from "./actions";
-import { resendVerification } from "../actions";
+import { useSearchParams } from "next/navigation";
+import { Tractor, Lock, Eye, EyeOff } from "lucide-react";
+import { resetPassword } from "./actions";
 
-export default function RegisterPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+function ResetPasswordForm() {
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [sent, setSent] = useState(false);
-
-  const [resendPending, setResendPending] = useState(false);
-  const [resendMessage, setResendMessage] = useState<string | null>(null);
-  const [resendCooldown, setResendCooldown] = useState(0);
-
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const timer = setInterval(() => {
-      setResendCooldown((s) => (s > 0 ? s - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [resendCooldown]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setPending(true);
 
-    const result = await registerUser(name, email, password, confirmPassword);
+    if (!token) {
+      setError("Linku është i pavlefshëm. Kërko një link të ri.");
+      return;
+    }
+
+    setPending(true);
+    const result = await resetPassword(token, password, confirmPassword);
 
     if (!result.ok) {
       setError(result.error ?? "Diçka shkoi keq.");
@@ -42,16 +35,7 @@ export default function RegisterPage() {
       return;
     }
 
-    setSent(true);
-  }
-
-  async function handleResend() {
-    setResendPending(true);
-    setResendMessage(null);
-    const result = await resendVerification(email);
-    setResendMessage(result.message);
-    setResendPending(false);
-    setResendCooldown(60);
+    window.location.href = "/login?reset=1";
   }
 
   return (
@@ -59,89 +43,36 @@ export default function RegisterPage() {
       <div className="w-full max-w-[420px] rounded-2xl border border-border bg-surface p-8 shadow-sm">
         <div className="flex flex-col items-center text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-light">
-            {sent ? (
-              <MailCheck className="h-7 w-7 text-primary" strokeWidth={2} />
-            ) : (
-              <Tractor className="h-7 w-7 text-primary" strokeWidth={2} />
-            )}
+            <Tractor className="h-7 w-7 text-primary" strokeWidth={2} />
           </div>
           <h1 className="mt-4 text-2xl font-semibold text-text-primary">
             AgroDitari
           </h1>
           <p className="mt-1 text-sm text-text-secondary">
-            Menaxhimi i fermës tuaj, në pëllëmbë të dorës.
+            Vendos një fjalëkalim të ri.
           </p>
         </div>
 
-        {sent ? (
+        {!token ? (
           <div className="mt-8 space-y-4 text-center">
-            <p className="text-sm text-text-primary">
-              Të dërguam një email verifikimi te <strong>{email}</strong>.
-              Kliko linkun për të aktivizuar llogarinë.
+            <p className="text-sm text-danger">
+              Linku është i pavlefshëm ose ka skaduar.
             </p>
-            {resendMessage && (
-              <p className="text-sm text-text-secondary">{resendMessage}</p>
-            )}
-            <button
-              type="button"
-              onClick={handleResend}
-              disabled={resendPending || resendCooldown > 0}
-              className="h-12 w-full rounded-lg border border-primary text-sm font-semibold text-primary transition-colors hover:bg-primary-light disabled:opacity-60"
+            <Link
+              href="/forgot-password"
+              className="flex h-12 w-full items-center justify-center rounded-lg border border-primary text-sm font-semibold text-primary transition-colors hover:bg-primary-light"
             >
-              {resendCooldown > 0
-                ? `Ridërgo email-in e verifikimit (${resendCooldown}s)`
-                : "Ridërgo email-in e verifikimit"}
-            </button>
+              Kërko një link të ri
+            </Link>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <div>
               <label
-                htmlFor="name"
-                className="mb-1.5 block text-sm font-semibold text-text-primary"
-              >
-                Emri
-              </label>
-              <div className="relative">
-                <User className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-text-secondary" />
-                <input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  placeholder="Emri juaj"
-                  className="h-12 w-full rounded-lg border border-border bg-surface pl-11 pr-4 text-text-primary placeholder:text-text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-light"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-1.5 block text-sm font-semibold text-text-primary"
-              >
-                Emaili
-              </label>
-              <div className="relative">
-                <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-text-secondary" />
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="emri@ferma.com"
-                  className="h-12 w-full rounded-lg border border-border bg-surface pl-11 pr-4 text-text-primary placeholder:text-text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-light"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
                 htmlFor="password"
                 className="mb-1.5 block text-sm font-semibold text-text-primary"
               >
-                Fjalëkalimi
+                Fjalëkalimi i ri
               </label>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-text-secondary" />
@@ -217,28 +148,23 @@ export default function RegisterPage() {
               disabled={pending}
               className="h-12 w-full rounded-lg bg-primary text-sm font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
             >
-              Regjistrohu
+              Ndrysho fjalëkalimin
             </button>
           </form>
         )}
-
-        <div className="my-6 flex items-center gap-3">
-          <div className="h-px flex-1 bg-border" />
-          <span className="text-sm text-text-secondary">Ose</span>
-          <div className="h-px flex-1 bg-border" />
-        </div>
-
-        <Link
-          href="/login"
-          className="flex h-12 w-full items-center justify-center rounded-lg border border-primary text-sm font-semibold text-primary transition-colors hover:bg-primary-light"
-        >
-          Kyçu
-        </Link>
       </div>
 
       <p className="mt-6 text-center text-xs text-text-secondary">
         © 2026 AgroDitari. Të gjitha të drejtat e rezervuara.
       </p>
     </main>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
