@@ -6,13 +6,14 @@ import { prisma } from "@/lib/prisma";
 import { createVerificationToken } from "@/lib/tokens";
 import { sendVerificationEmail } from "@/lib/email";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { PasswordSchema } from "@/lib/validations";
 
 const RegisterSchema = z
   .object({
     name: z.string().min(2),
     email: z.string().email(),
-    password: z.string().min(6),
-    confirmPassword: z.string().min(6),
+    password: PasswordSchema,
+    confirmPassword: PasswordSchema,
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Fjalëkalimet nuk përputhen.",
@@ -34,6 +35,12 @@ export async function registerUser(
     confirmPassword,
   });
   if (!parsed.success) {
+    const passwordIssue = parsed.error.issues.find(
+      (issue) => issue.path[0] === "password"
+    );
+    if (passwordIssue) {
+      return { ok: false, error: passwordIssue.message };
+    }
     const mismatch = parsed.error.issues.some(
       (issue) => issue.path[0] === "confirmPassword"
     );

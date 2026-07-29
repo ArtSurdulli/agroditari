@@ -13,7 +13,11 @@ export const proxy = auth((req) => {
   const isAuthApi = path.startsWith("/api/auth");
   const isApi = path.startsWith("/api") && !isAuthApi;
   const isPublicPage =
-    path === "/login" || path === "/register" || path.startsWith("/verifo");
+    path === "/login" ||
+    path === "/register" ||
+    path.startsWith("/verifo") ||
+    path === "/forgot-password" ||
+    path === "/reset-password";
 
   if (isAuthApi) return NextResponse.next();
 

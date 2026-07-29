@@ -11,6 +11,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const verified = searchParams.get("verified") === "1";
   const verificationFailed = searchParams.get("error") === "verifikimi_deshtoi";
+  const resetSuccess = searchParams.get("reset") === "1";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -84,6 +85,12 @@ function LoginForm() {
           </p>
         )}
 
+        {resetSuccess && (
+          <p className="mt-6 rounded-lg bg-primary-light px-4 py-3 text-center text-sm font-semibold text-primary-dark">
+            Fjalëkalimi u ndryshua. Tani mund të kyçesh.
+          </p>
+        )}
+
         {verificationFailed && (
           <p className="mt-6 rounded-lg bg-danger-light px-4 py-3 text-center text-sm font-semibold text-danger">
             Verifikimi dështoi. Provo përsëri ose regjistrohu sërish.
@@ -106,7 +113,7 @@ function LoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="emri@ferma.al"
+                placeholder="emri@ferma.com"
                 className="h-12 w-full rounded-lg border border-border bg-surface pl-11 pr-4 text-text-primary placeholder:text-text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-light"
               />
             </div>
@@ -144,6 +151,14 @@ function LoginForm() {
                   <Eye className="h-5 w-5" />
                 )}
               </button>
+            </div>
+            <div className="mt-1.5 text-right">
+              <Link
+                href="/forgot-password"
+                className="text-sm font-medium text-primary hover:text-primary-dark"
+              >
+                Keni harruar fjalëkalimin?
+              </Link>
             </div>
           </div>
 
