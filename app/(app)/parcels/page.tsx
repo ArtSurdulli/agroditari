@@ -2,12 +2,19 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { MoreVertical, Plus, Search, Tractor } from "lucide-react";
+import { Map, MoreVertical, Plus, Search } from "lucide-react";
 import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { EntityCard } from "@/components/common/entity-card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -25,22 +32,31 @@ import {
 import { useDebounce } from "@/hooks/use-debounce";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMounted } from "@/hooks/use-mounted";
+import { useParcels } from "@/hooks/use-parcels";
 import { useFarms } from "@/hooks/use-farms";
-import { FarmFormDialog } from "./farm-form-dialog";
-import { DeleteFarmDialog } from "./delete-farm-dialog";
-import type { Farm } from "@/types/farm";
+import { ParcelFormDialog } from "./parcel-form-dialog";
+import { DeleteParcelDialog } from "./delete-parcel-dialog";
+import type { Parcel } from "@/types/parcel";
 
-export default function FarmsPage() {
+const ALL_FARMS_VALUE = "all";
+
+function formatArea(areaHa: string) {
+  const value = Number(areaHa);
+  return Number.isFinite(value) ? value.toLocaleString("sq-AL") : areaHa;
+}
+
+export default function ParcelsPage() {
   return (
     <Suspense>
-      <FarmsPageContent />
+      <ParcelsPageContent />
     </Suspense>
   );
 }
 
-function FarmsPageContent() {
+function ParcelsPageContent() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
+  const [farmFilter, setFarmFilter] = useState<string>(ALL_FARMS_VALUE);
 
   // Guard against a hydration mismatch: the server always renders the
   // mobile (card) layout, so the client's first render must match that
@@ -49,14 +65,19 @@ function FarmsPageContent() {
   const matchesDesktop = useMediaQuery("(min-width: 768px)");
   const isDesktop = mounted && matchesDesktop;
 
+  const { data: farms } = useFarms();
+
   const {
-    data: farms,
+    data: parcels,
     isLoading,
     isError,
     error,
-  } = useFarms({ q: debouncedSearch });
+  } = useParcels({
+    q: debouncedSearch,
+    farmId: farmFilter === ALL_FARMS_VALUE ? undefined : farmFilter,
+  });
 
-  // Quick-add ("+ Shto") deep link: /farms?new=1 opens the create dialog
+  // Quick-add ("+ Shto") deep link: /parcels?new=1 opens the create dialog
   // straight away. useSearchParams() (not a one-time window.location read) is
   // what makes this fire even when this page was already mounted (e.g. the
   // client router reused it from an earlier visit) — a plain useState
@@ -85,40 +106,66 @@ function FarmsPageContent() {
     }
   }, [newFlag, pathname, router]);
 
-  const [editingFarm, setEditingFarm] = useState<Farm | null>(null);
-  const [deletingFarm, setDeletingFarm] = useState<Farm | null>(null);
+  const [editingParcel, setEditingParcel] = useState<Parcel | null>(null);
+  const [deletingParcel, setDeletingParcel] = useState<Parcel | null>(null);
+
+  const isFiltered = !!debouncedSearch || farmFilter !== ALL_FARMS_VALUE;
 
   function openCreateForm() {
-    setEditingFarm(null);
+    setEditingParcel(null);
     setFormOpen(true);
   }
 
-  function openEditForm(farm: Farm) {
-    setEditingFarm(farm);
+  function openEditForm(parcel: Parcel) {
+    setEditingParcel(parcel);
     setFormOpen(true);
   }
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
       <PageHeader
-        title="Fermat"
-        subtitle="Menaxho fermat e tua."
+        title="Parcelat"
+        subtitle="Menaxho parcelat e fermave të tua."
         actions={
           <Button onClick={openCreateForm}>
             <Plus className="h-4 w-4" />
-            Shto fermë
+            Shto parcelë
           </Button>
         }
       />
 
-      <div className="relative mt-6 max-w-sm">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Kërko ferma..."
-          className="pl-9"
-        />
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative max-w-sm flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Kërko parcela..."
+            className="pl-9"
+          />
+        </div>
+
+        <Select
+          value={farmFilter}
+          onValueChange={(value) => setFarmFilter(value ?? ALL_FARMS_VALUE)}
+          items={[
+            { value: ALL_FARMS_VALUE, label: "Të gjitha fermat" },
+            ...(farms?.map((farm) => ({ value: farm.id, label: farm.name })) ??
+              []),
+          ]}
+        >
+          <SelectTrigger className="w-full sm:w-56">
+            <SelectValue placeholder="Të gjitha fermat" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_FARMS_VALUE}>Të gjitha fermat</SelectItem>
+            {farms?.map((farm) => (
+              <SelectItem key={farm.id} value={farm.id}>
+                {farm.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="mt-6">
@@ -130,22 +177,22 @@ function FarmsPageContent() {
               ? error.message
               : "Ndodhi një gabim. Provo përsëri."}
           </p>
-        ) : !farms || farms.length === 0 ? (
-          debouncedSearch ? (
+        ) : !parcels || parcels.length === 0 ? (
+          isFiltered ? (
             <EmptyState
               icon={Search}
-              title="Nuk u gjet asnjë fermë."
+              title="Nuk u gjet asnjë parcelë."
               description="Provo një kërkim tjetër."
             />
           ) : (
             <EmptyState
-              icon={Tractor}
-              title="Ende s'ka ferma."
-              description="Shto fermën tënde të parë për të filluar."
+              icon={Map}
+              title="Ende s'ka parcela."
+              description="Shto parcelën tënde të parë për të filluar."
               action={
                 <Button onClick={openCreateForm}>
                   <Plus className="h-4 w-4" />
-                  Shto fermë
+                  Shto parcelë
                 </Button>
               }
             />
@@ -156,24 +203,32 @@ function FarmsPageContent() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Emri</TableHead>
-                  <TableHead>Vendndodhja</TableHead>
+                  <TableHead>Ferma</TableHead>
+                  <TableHead>Sipërfaqja (ha)</TableHead>
+                  <TableHead>Lloji i tokës</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {farms.map((farm) => (
-                  <TableRow key={farm.id}>
+                {parcels.map((parcel) => (
+                  <TableRow key={parcel.id}>
                     <TableCell className="font-medium text-text-primary">
-                      {farm.name}
+                      {parcel.name}
                     </TableCell>
                     <TableCell className="text-text-secondary">
-                      {farm.location || "—"}
+                      {parcel.farmName}
+                    </TableCell>
+                    <TableCell className="text-text-secondary">
+                      {formatArea(parcel.areaHa)}
+                    </TableCell>
+                    <TableCell className="text-text-secondary">
+                      {parcel.soilType || "—"}
                     </TableCell>
                     <TableCell>
-                      <FarmRowActions
-                        farm={farm}
-                        onEdit={() => openEditForm(farm)}
-                        onDelete={() => setDeletingFarm(farm)}
+                      <ParcelRowActions
+                        parcel={parcel}
+                        onEdit={() => openEditForm(parcel)}
+                        onDelete={() => setDeletingParcel(parcel)}
                       />
                     </TableCell>
                   </TableRow>
@@ -183,17 +238,17 @@ function FarmsPageContent() {
           </div>
         ) : (
           <div className="space-y-3">
-            {farms.map((farm) => (
+            {parcels.map((parcel) => (
               <EntityCard
-                key={farm.id}
-                entityKey="farms"
-                title={farm.name}
-                subtitle={farm.location}
+                key={parcel.id}
+                entityKey="parcels"
+                title={parcel.name}
+                subtitle={`${parcel.farmName} · ${formatArea(parcel.areaHa)} ha`}
                 right={
-                  <FarmRowActions
-                    farm={farm}
-                    onEdit={() => openEditForm(farm)}
-                    onDelete={() => setDeletingFarm(farm)}
+                  <ParcelRowActions
+                    parcel={parcel}
+                    onEdit={() => openEditForm(parcel)}
+                    onDelete={() => setDeletingParcel(parcel)}
                   />
                 }
               />
@@ -202,22 +257,26 @@ function FarmsPageContent() {
         )}
       </div>
 
-      <FarmFormDialog open={formOpen} onOpenChange={setFormOpen} farm={editingFarm} />
-      <DeleteFarmDialog
-        open={!!deletingFarm}
-        onOpenChange={(open) => !open && setDeletingFarm(null)}
-        farm={deletingFarm}
+      <ParcelFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        parcel={editingParcel}
+      />
+      <DeleteParcelDialog
+        open={!!deletingParcel}
+        onOpenChange={(open) => !open && setDeletingParcel(null)}
+        parcel={deletingParcel}
       />
     </main>
   );
 }
 
-function FarmRowActions({
-  farm,
+function ParcelRowActions({
+  parcel,
   onEdit,
   onDelete,
 }: {
-  farm: Farm;
+  parcel: Parcel;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -228,7 +287,7 @@ function FarmRowActions({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={`Veprime për ${farm.name}`}
+            aria-label={`Veprime për ${parcel.name}`}
           />
         }
       >

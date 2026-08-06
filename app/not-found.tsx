@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Tractor } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
@@ -17,9 +17,9 @@ export default function NotFound() {
           Faqja që kërkove nuk ekziston ose është zhvendosur.
         </p>
       </div>
-      <Button render={<Link href="/" />} className="mt-2">
+      <Link href="/" className={buttonVariants({ className: "mt-2" })}>
         Kthehu te ballina
-      </Button>
+      </Link>
     </div>
   );
 }

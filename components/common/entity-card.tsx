@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { EntityKey } from "@/lib/entity-theme";
 import { getEntityTheme } from "@/lib/entity-theme";
 import { cn } from "@/lib/utils";
@@ -8,7 +9,11 @@ type EntityCardProps = {
   subtitle?: string | null;
   badge?: string;
   right?: React.ReactNode;
-  onClick?: () => void;
+  // Makes the whole card navigate to a detail page. Implemented as a
+  // "stretched link" (an absolutely-positioned Link sibling, not a wrapper)
+  // so it can coexist with an interactive `right` slot (e.g. a dropdown
+  // trigger button) without nesting one clickable element inside another.
+  href?: string;
   className?: string;
 };
 
@@ -18,14 +23,30 @@ export function EntityCard({
   subtitle,
   badge,
   right,
-  onClick,
+  href,
   className,
 }: EntityCardProps) {
   const theme = getEntityTheme(entityKey);
   const Icon = theme.icon;
 
-  const content = (
-    <>
+  return (
+    <div
+      className={cn(
+        "relative flex w-full items-center gap-3 rounded-[14px] border-[1.5px] p-4 text-left transition-colors",
+        className
+      )}
+      style={{
+        backgroundColor: theme.color.tint,
+        borderColor: theme.color.border,
+      }}
+    >
+      {href && (
+        <Link
+          href={href}
+          aria-label={title}
+          className="absolute inset-0 rounded-[14px]"
+        />
+      )}
       <div
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
         style={{ backgroundColor: theme.color.solid }}
@@ -50,7 +71,7 @@ export function EntityCard({
       </div>
       {badge && (
         <span
-          className="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium"
+          className="relative shrink-0 rounded-full px-2.5 py-1 text-xs font-medium"
           style={{
             backgroundColor: theme.color.badgeBg,
             color: theme.color.textStrong,
@@ -59,31 +80,7 @@ export function EntityCard({
           {badge}
         </span>
       )}
-      {right && <div className="shrink-0">{right}</div>}
-    </>
-  );
-
-  const sharedClassName = cn(
-    "flex w-full items-center gap-3 rounded-[14px] border-[1.5px] p-4 text-left transition-colors",
-    onClick && "cursor-pointer active:translate-y-px",
-    className
-  );
-  const style = {
-    backgroundColor: theme.color.tint,
-    borderColor: theme.color.border,
-  };
-
-  if (onClick) {
-    return (
-      <button type="button" onClick={onClick} className={sharedClassName} style={style}>
-        {content}
-      </button>
-    );
-  }
-
-  return (
-    <div className={sharedClassName} style={style}>
-      {content}
+      {right && <div className="relative shrink-0">{right}</div>}
     </div>
   );
 }
