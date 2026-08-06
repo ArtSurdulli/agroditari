@@ -5,44 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { withApiHandler, apiError } from "@/lib/api/response";
 import { validate } from "@/lib/validations";
 import { activitySchema } from "@/lib/validations/activity";
+import { activityInclude, serializeActivity } from "../_shared";
 
 type RouteContext = { params: Promise<{ id: string }> };
-
-function serializeActivity(activity: {
-  id: string;
-  cropSeasonId: string;
-  activityType: string;
-  date: Date;
-  notes: string | null;
-  createdAt: Date;
-  cropSeason: {
-    season: string;
-    parcel: { name: string };
-    crop: { name: string };
-  };
-}) {
-  return {
-    id: activity.id,
-    cropSeasonId: activity.cropSeasonId,
-    season: activity.cropSeason.season,
-    cropName: activity.cropSeason.crop.name,
-    parcelName: activity.cropSeason.parcel.name,
-    activityType: activity.activityType,
-    date: activity.date,
-    notes: activity.notes,
-    createdAt: activity.createdAt,
-  };
-}
-
-const activityInclude = {
-  cropSeason: {
-    select: {
-      season: true,
-      parcel: { select: { name: true } },
-      crop: { select: { name: true } },
-    },
-  },
-} as const;
 
 // Loads an activity with its season -> parcel -> farm and confirms four-hop
 // ownership (activity -> cropSeason -> parcel -> farm -> user) in one step.

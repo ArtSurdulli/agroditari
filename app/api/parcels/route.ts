@@ -6,28 +6,7 @@ import { withApiHandler, apiError } from "@/lib/api/response";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { validate } from "@/lib/validations";
 import { parcelSchema } from "@/lib/validations/parcel";
-
-function serializeParcel(parcel: {
-  id: string;
-  farmId: string;
-  name: string;
-  areaHa: unknown;
-  soilType: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  farm: { name: string };
-}) {
-  return {
-    id: parcel.id,
-    farmId: parcel.farmId,
-    farmName: parcel.farm.name,
-    name: parcel.name,
-    areaHa: parcel.areaHa,
-    soilType: parcel.soilType,
-    createdAt: parcel.createdAt,
-    updatedAt: parcel.updatedAt,
-  };
-}
+import { parcelInclude, serializeParcel } from "./_shared";
 
 export const GET = withApiHandler(async (request: NextRequest) => {
   const session = await auth();
@@ -53,7 +32,7 @@ export const GET = withApiHandler(async (request: NextRequest) => {
       ...(farmId ? { farmId } : {}),
       ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
     },
-    include: { farm: { select: { name: true } } },
+    include: parcelInclude,
     orderBy: { createdAt: "desc" },
   });
 
@@ -98,7 +77,7 @@ export const POST = withApiHandler(async (request: NextRequest) => {
         areaHa: result.data.areaHa,
         soilType: result.data.soilType || null,
       },
-      include: { farm: { select: { name: true } } },
+      include: parcelInclude,
     });
     return NextResponse.json(serializeParcel(parcel), { status: 201 });
   } catch (err) {

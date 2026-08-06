@@ -5,30 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { withApiHandler, apiError } from "@/lib/api/response";
 import { validate } from "@/lib/validations";
 import { parcelSchema } from "@/lib/validations/parcel";
+import { parcelInclude, serializeParcel } from "../_shared";
 
 type RouteContext = { params: Promise<{ id: string }> };
-
-function serializeParcel(parcel: {
-  id: string;
-  farmId: string;
-  name: string;
-  areaHa: unknown;
-  soilType: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  farm: { name: string };
-}) {
-  return {
-    id: parcel.id,
-    farmId: parcel.farmId,
-    farmName: parcel.farm.name,
-    name: parcel.name,
-    areaHa: parcel.areaHa,
-    soilType: parcel.soilType,
-    createdAt: parcel.createdAt,
-    updatedAt: parcel.updatedAt,
-  };
-}
 
 // Loads a parcel with its farm and confirms two-hop ownership
 // (parcel -> farm -> user) in one step. Callers must treat "not found" and
@@ -110,7 +89,7 @@ export const PATCH = withApiHandler(
       const parcel = await prisma.parcel.update({
         where: { id },
         data,
-        include: { farm: { select: { name: true } } },
+        include: parcelInclude,
       });
       return NextResponse.json(serializeParcel(parcel));
     } catch (err) {
