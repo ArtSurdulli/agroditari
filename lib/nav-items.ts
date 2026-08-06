@@ -32,7 +32,9 @@ export const navItems: NavItem[] = [
     color: entityTheme.parcels.color,
   },
   {
-    href: "/activities",
+    // Points at /seasons for now — the activity diary itself will live
+    // inside a season later, but this is where "Ditari" lands until then.
+    href: "/seasons",
     label: "Ditari",
     icon: entityTheme.activities.icon,
     color: entityTheme.activities.color,
