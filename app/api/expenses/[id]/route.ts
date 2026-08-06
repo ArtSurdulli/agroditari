@@ -5,52 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { withApiHandler, apiError } from "@/lib/api/response";
 import { validate } from "@/lib/validations";
 import { expenseBaseSchema } from "@/lib/validations/expense";
+import { expenseInclude, serializeExpense } from "../_shared";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 const AMOUNT_TOLERANCE = 0.01;
-
-function serializeExpense(expense: {
-  id: string;
-  cropSeasonId: string;
-  category: string;
-  description: string | null;
-  quantity: unknown;
-  unitPrice: unknown;
-  amount: unknown;
-  date: Date;
-  createdAt: Date;
-  cropSeason: {
-    season: string;
-    parcel: { name: string };
-    crop: { name: string };
-  };
-}) {
-  return {
-    id: expense.id,
-    cropSeasonId: expense.cropSeasonId,
-    season: expense.cropSeason.season,
-    cropName: expense.cropSeason.crop.name,
-    parcelName: expense.cropSeason.parcel.name,
-    category: expense.category,
-    description: expense.description,
-    quantity: expense.quantity,
-    unitPrice: expense.unitPrice,
-    amount: expense.amount,
-    date: expense.date,
-    createdAt: expense.createdAt,
-  };
-}
-
-const expenseInclude = {
-  cropSeason: {
-    select: {
-      season: true,
-      parcel: { select: { name: true } },
-      crop: { select: { name: true } },
-    },
-  },
-} as const;
 
 // Loads an expense with its season -> parcel -> farm and confirms four-hop
 // ownership (expense -> cropSeason -> parcel -> farm -> user) in one step.
