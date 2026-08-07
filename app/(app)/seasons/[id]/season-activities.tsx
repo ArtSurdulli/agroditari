@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import { MoreVertical, Notebook, Plus } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { EntityCard } from "@/components/common/entity-card";
@@ -23,6 +22,7 @@ import {
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMounted } from "@/hooks/use-mounted";
 import { useActivities } from "@/hooks/use-activities";
+import { useOpenOnFlag } from "@/hooks/use-open-on-flag";
 import { activityTypeLabels } from "@/lib/validations/activity";
 import { ActivityFormDialog } from "./activity-form-dialog";
 import { DeleteActivityDialog } from "./delete-activity-dialog";
@@ -32,15 +32,7 @@ function formatDate(value: string) {
   return new Date(value).toLocaleDateString("sq-AL");
 }
 
-export function SeasonActivities({
-  cropSeasonId,
-  autoOpenCreate = false,
-}: {
-  cropSeasonId: string;
-  // Set when arriving via the global quick-add flow (?new=activities) — opens
-  // the create dialog immediately instead of requiring another tap.
-  autoOpenCreate?: boolean;
-}) {
+export function SeasonActivities({ cropSeasonId }: { cropSeasonId: string }) {
   // Guard against a hydration mismatch: the server always renders the
   // mobile (card) layout, so the client's first render must match that
   // exactly. Only trust the real media query result after mount.
@@ -55,28 +47,9 @@ export function SeasonActivities({
     error,
   } = useActivities({ cropSeasonId });
 
-  // Seeded from autoOpenCreate so a fresh navigation opens it immediately;
-  // the sync check below (adjusted during render, same pattern as the
-  // dialogs' syncedOpen — an effect body must not call setState
-  // synchronously) then also catches the prop turning true on an
-  // already-mounted instance (e.g. re-visiting this season with a different
-  // ?new= value).
-  const router = useRouter();
-  const pathname = usePathname();
-  const [formOpen, setFormOpen] = useState(autoOpenCreate);
-  const [syncedAutoOpen, setSyncedAutoOpen] = useState(autoOpenCreate);
-  if (autoOpenCreate !== syncedAutoOpen) {
-    setSyncedAutoOpen(autoOpenCreate);
-    if (autoOpenCreate) {
-      setFormOpen(true);
-    }
-  }
-
-  useEffect(() => {
-    if (autoOpenCreate) {
-      router.replace(pathname);
-    }
-  }, [autoOpenCreate, pathname, router]);
+  // Quick-add ("+ Shto") deep link: /seasons/[id]?new=activities opens the
+  // create dialog straight away.
+  const [formOpen, setFormOpen] = useOpenOnFlag("new", "activities");
 
   const [editingActivity, setEditingActivity] = useState<Activity | null>(
     null

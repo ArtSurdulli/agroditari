@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -66,16 +67,14 @@ export default async function SeasonDetailPage({
           <TabsTrigger value="expenses">Shpenzime</TabsTrigger>
         </TabsList>
         <TabsContent value="activities" className="mt-4">
-          <SeasonActivities
-            cropSeasonId={season.id}
-            autoOpenCreate={quickAdd === "activities"}
-          />
+          <Suspense>
+            <SeasonActivities cropSeasonId={season.id} />
+          </Suspense>
         </TabsContent>
         <TabsContent value="expenses" className="mt-4">
-          <SeasonExpenses
-            cropSeasonId={season.id}
-            autoOpenCreate={quickAdd === "expenses"}
-          />
+          <Suspense>
+            <SeasonExpenses cropSeasonId={season.id} />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </main>

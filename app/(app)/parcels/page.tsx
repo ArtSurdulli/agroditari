@@ -1,7 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { Map, MoreVertical, Plus, Search } from "lucide-react";
 import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
@@ -34,6 +33,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMounted } from "@/hooks/use-mounted";
 import { useParcels } from "@/hooks/use-parcels";
 import { useFarms } from "@/hooks/use-farms";
+import { useOpenOnFlag } from "@/hooks/use-open-on-flag";
 import { ParcelFormDialog } from "./parcel-form-dialog";
 import { DeleteParcelDialog } from "./delete-parcel-dialog";
 import type { Parcel } from "@/types/parcel";
@@ -78,33 +78,8 @@ function ParcelsPageContent() {
   });
 
   // Quick-add ("+ Shto") deep link: /parcels?new=1 opens the create dialog
-  // straight away. useSearchParams() (not a one-time window.location read) is
-  // what makes this fire even when this page was already mounted (e.g. the
-  // client router reused it from an earlier visit) — a plain useState
-  // initializer only runs once per component instance and would miss that.
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const newFlag = searchParams.get("new") === "1";
-
-  // Seeded from newFlag so a fresh navigation opens it immediately; the sync
-  // check below (adjusted during render, same pattern as the dialogs'
-  // syncedOpen — an effect body must not call setState synchronously) then
-  // also catches the flag reappearing on an already-mounted instance.
-  const [formOpen, setFormOpen] = useState(newFlag);
-  const [syncedNewFlag, setSyncedNewFlag] = useState(newFlag);
-  if (newFlag !== syncedNewFlag) {
-    setSyncedNewFlag(newFlag);
-    if (newFlag) {
-      setFormOpen(true);
-    }
-  }
-
-  useEffect(() => {
-    if (newFlag) {
-      router.replace(pathname);
-    }
-  }, [newFlag, pathname, router]);
+  // straight away.
+  const [formOpen, setFormOpen] = useOpenOnFlag("new");
 
   const [editingParcel, setEditingParcel] = useState<Parcel | null>(null);
   const [deletingParcel, setDeletingParcel] = useState<Parcel | null>(null);

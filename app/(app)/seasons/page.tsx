@@ -1,8 +1,7 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MoreVertical, Plus, Search, Sprout } from "lucide-react";
 import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
@@ -35,6 +34,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMounted } from "@/hooks/use-mounted";
 import { useCropSeasons } from "@/hooks/use-crop-seasons";
 import { useParcels } from "@/hooks/use-parcels";
+import { useOpenOnFlag } from "@/hooks/use-open-on-flag";
 import { entityTheme } from "@/lib/entity-theme";
 import { seasonStatusValues, seasonStatusLabels } from "@/lib/validations/crop-season";
 import { CropSeasonFormDialog } from "./crop-season-form-dialog";
@@ -96,33 +96,8 @@ function CropSeasonsPageContent() {
   });
 
   // Quick-add ("+ Shto") deep link: /seasons?new=1 opens the create dialog
-  // straight away. useSearchParams() (not a one-time window.location read) is
-  // what makes this fire even when this page was already mounted (e.g. the
-  // client router reused it from an earlier visit) — a plain useState
-  // initializer only runs once per component instance and would miss that.
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const newFlag = searchParams.get("new") === "1";
-
-  // Seeded from newFlag so a fresh navigation opens it immediately; the sync
-  // check below (adjusted during render, same pattern as the dialogs'
-  // syncedOpen — an effect body must not call setState synchronously) then
-  // also catches the flag reappearing on an already-mounted instance.
-  const [formOpen, setFormOpen] = useState(newFlag);
-  const [syncedNewFlag, setSyncedNewFlag] = useState(newFlag);
-  if (newFlag !== syncedNewFlag) {
-    setSyncedNewFlag(newFlag);
-    if (newFlag) {
-      setFormOpen(true);
-    }
-  }
-
-  useEffect(() => {
-    if (newFlag) {
-      router.replace(pathname);
-    }
-  }, [newFlag, pathname, router]);
+  // straight away.
+  const [formOpen, setFormOpen] = useOpenOnFlag("new");
 
   const [editingSeason, setEditingSeason] = useState<CropSeason | null>(null);
   const [deletingSeason, setDeletingSeason] = useState<CropSeason | null>(

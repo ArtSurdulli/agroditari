@@ -1,7 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { MoreVertical, Plus, Search, Tractor } from "lucide-react";
 import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
@@ -26,6 +25,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMounted } from "@/hooks/use-mounted";
 import { useFarms } from "@/hooks/use-farms";
+import { useOpenOnFlag } from "@/hooks/use-open-on-flag";
 import { FarmFormDialog } from "./farm-form-dialog";
 import { DeleteFarmDialog } from "./delete-farm-dialog";
 import type { Farm } from "@/types/farm";
@@ -57,33 +57,8 @@ function FarmsPageContent() {
   } = useFarms({ q: debouncedSearch });
 
   // Quick-add ("+ Shto") deep link: /farms?new=1 opens the create dialog
-  // straight away. useSearchParams() (not a one-time window.location read) is
-  // what makes this fire even when this page was already mounted (e.g. the
-  // client router reused it from an earlier visit) — a plain useState
-  // initializer only runs once per component instance and would miss that.
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const newFlag = searchParams.get("new") === "1";
-
-  // Seeded from newFlag so a fresh navigation opens it immediately; the sync
-  // check below (adjusted during render, same pattern as the dialogs'
-  // syncedOpen — an effect body must not call setState synchronously) then
-  // also catches the flag reappearing on an already-mounted instance.
-  const [formOpen, setFormOpen] = useState(newFlag);
-  const [syncedNewFlag, setSyncedNewFlag] = useState(newFlag);
-  if (newFlag !== syncedNewFlag) {
-    setSyncedNewFlag(newFlag);
-    if (newFlag) {
-      setFormOpen(true);
-    }
-  }
-
-  useEffect(() => {
-    if (newFlag) {
-      router.replace(pathname);
-    }
-  }, [newFlag, pathname, router]);
+  // straight away.
+  const [formOpen, setFormOpen] = useOpenOnFlag("new");
 
   const [editingFarm, setEditingFarm] = useState<Farm | null>(null);
   const [deletingFarm, setDeletingFarm] = useState<Farm | null>(null);
