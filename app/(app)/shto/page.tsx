@@ -16,9 +16,8 @@ type QuickAddOption = {
 export default function QuickAddPage() {
   const { data: seasons, isLoading } = useCropSeasons();
   const hasSeasons = !isLoading && !!seasons && seasons.length > 0;
-  const seasonsNotLoaded = isLoading;
 
-  const seasonScopedHelper = seasonsNotLoaded
+  const seasonScopedHelper = isLoading
     ? "Duke kontrolluar..."
     : hasSeasons
       ? undefined
@@ -54,6 +53,12 @@ export default function QuickAddPage() {
       label: "Shpenzim",
       helper: seasonScopedHelper ?? "Para që shpenzove",
       href: hasSeasons ? "/shto/shpenzim" : "/seasons?new=1",
+    },
+    {
+      entityKey: "harvests",
+      label: "Korrje",
+      helper: seasonScopedHelper ?? "Sa korrite dhe sa fitove",
+      href: hasSeasons ? "/shto/korrje" : "/seasons?new=1",
     },
   ];
 

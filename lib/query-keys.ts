@@ -40,4 +40,19 @@ export const keys = {
       ["expenses", "list", params ?? {}] as const,
     detail: (id: string) => ["expenses", "detail", id] as const,
   },
+  harvests: {
+    all: ["harvests"] as const,
+    list: (params?: { cropSeasonId?: string }) =>
+      ["harvests", "list", params ?? {}] as const,
+    detail: (id: string) => ["harvests", "detail", id] as const,
+  },
+  reports: {
+    all: ["reports"] as const,
+    list: (params?: {
+      seasonId?: string;
+      parcelId?: string;
+      from?: string;
+      to?: string;
+    }) => ["reports", "list", params ?? {}] as const,
+  },
 } as const;

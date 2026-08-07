@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 const SEASON_DETAIL_PATTERN = /^\/seasons\/([^/]+)$/;
 
 // On a season detail page, the "+" skips the chooser and offers the season's
-// own two entry points directly (season already known, no picking needed).
+// own entry points directly (season already known, no picking needed).
 function useQuickAddSeasonId(): string | null {
   const pathname = usePathname();
   const match = pathname.match(SEASON_DETAIL_PATTERN);
@@ -54,6 +54,11 @@ function SeasonQuickAddMenu({
           render={<Link href={`/seasons/${seasonId}?new=expenses`} />}
         >
           Shpenzim
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          render={<Link href={`/seasons/${seasonId}?new=harvests`} />}
+        >
+          Korrje
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

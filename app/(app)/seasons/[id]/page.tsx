@@ -14,11 +14,14 @@ import { entityTheme } from "@/lib/entity-theme";
 import { seasonStatusLabels } from "@/lib/validations/crop-season";
 import { SeasonActivities } from "./season-activities";
 import { SeasonExpenses } from "./season-expenses";
+import { SeasonHarvests } from "./season-harvests";
 
 type SeasonDetailPageProps = {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ new?: string }>;
 };
+
+const TAB_VALUES = ["activities", "expenses", "harvests"] as const;
 
 export default async function SeasonDetailPage({
   params,
@@ -26,7 +29,11 @@ export default async function SeasonDetailPage({
 }: SeasonDetailPageProps) {
   const { id } = await params;
   const { new: quickAdd } = await searchParams;
-  const activeTab = quickAdd === "expenses" ? "expenses" : "activities";
+  const activeTab = (TAB_VALUES as readonly string[]).includes(
+    quickAdd ?? ""
+  )
+    ? (quickAdd as (typeof TAB_VALUES)[number])
+    : "activities";
   const session = await auth();
   if (!session?.user) {
     notFound();
@@ -65,6 +72,7 @@ export default async function SeasonDetailPage({
         <TabsList>
           <TabsTrigger value="activities">Aktivitete</TabsTrigger>
           <TabsTrigger value="expenses">Shpenzime</TabsTrigger>
+          <TabsTrigger value="harvests">Korrje</TabsTrigger>
         </TabsList>
         <TabsContent value="activities" className="mt-4">
           <Suspense>
@@ -74,6 +82,11 @@ export default async function SeasonDetailPage({
         <TabsContent value="expenses" className="mt-4">
           <Suspense>
             <SeasonExpenses cropSeasonId={season.id} />
+          </Suspense>
+        </TabsContent>
+        <TabsContent value="harvests" className="mt-4">
+          <Suspense>
+            <SeasonHarvests cropSeasonId={season.id} />
           </Suspense>
         </TabsContent>
       </Tabs>

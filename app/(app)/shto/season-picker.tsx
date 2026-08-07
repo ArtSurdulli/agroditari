@@ -8,7 +8,7 @@ import { useCropSeasons } from "@/hooks/use-crop-seasons";
 import { entityTheme } from "@/lib/entity-theme";
 
 type SeasonPickerProps = {
-  target: "activities" | "expenses";
+  target: "activities" | "expenses" | "harvests";
   title: string;
 };
 
