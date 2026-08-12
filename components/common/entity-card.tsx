@@ -5,7 +5,9 @@ import { cn } from "@/lib/utils";
 
 type EntityCardProps = {
   entityKey: EntityKey;
-  title: string;
+  // ReactNode (not just string) so callers can style part of the title,
+  // e.g. a struck-through title for a completed reminder.
+  title: React.ReactNode;
   subtitle?: string | null;
   badge?: string;
   right?: React.ReactNode;
@@ -43,7 +45,7 @@ export function EntityCard({
       {href && (
         <Link
           href={href}
-          aria-label={title}
+          aria-label={typeof title === "string" ? title : undefined}
           className="absolute inset-0 rounded-[14px]"
         />
       )}

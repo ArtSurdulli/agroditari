@@ -40,6 +40,9 @@ yarn-error.log*
 AGENTS.md
 CLAUDE.md
 
+# local-only test data seed — never committed
+prisma/seed-test.ts
+
 # vercel
 .vercel
 
