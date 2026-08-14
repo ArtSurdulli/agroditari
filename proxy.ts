@@ -11,7 +11,10 @@ export const proxy = auth((req) => {
   const isActive = session?.user?.status === "active";
   const path = nextUrl.pathname;
   const isAuthApi = path.startsWith("/api/auth");
-  const isApi = path.startsWith("/api") && !isAuthApi;
+  // Cron endpoints have no user session (Vercel Cron calls them directly) —
+  // each one guards itself with its own secret check instead.
+  const isCronApi = path.startsWith("/api/cron");
+  const isApi = path.startsWith("/api") && !isAuthApi && !isCronApi;
   const isPublicPage =
     path === "/login" ||
     path === "/register" ||

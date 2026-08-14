@@ -6,10 +6,21 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight, LogOut, Tractor } from "lucide-react";
 import { signOutAction } from "@/app/(app)/actions";
 import { useMounted } from "@/hooks/use-mounted";
+import { useReminders } from "@/hooks/use-reminders";
 import { navItems } from "@/lib/nav-items";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "agroditari:sidebar-collapsed";
+
+// Local calendar date, matching the same "today" definition used on the
+// reminders page (dueDate is a plain calendar date, not a timestamp).
+function todayStr() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 
 function getStoredCollapsed(): boolean {
   if (typeof window === "undefined") return false;
@@ -34,6 +45,14 @@ export function Sidebar({ user }: SidebarProps) {
   // the server-rendered HTML exactly (avoids a hydration mismatch); the
   // persisted preference takes effect once mounted is true.
   const collapsed = mounted && storedCollapsed;
+
+  // Count of not-done reminders that are due today or overdue, shown as a
+  // small badge on the "Kujtesa" nav item.
+  const { data: pendingReminders } = useReminders({ done: false });
+  const today = todayStr();
+  const dueSoonCount = (pendingReminders ?? []).filter(
+    (reminder) => reminder.dueDate.slice(0, 10) <= today
+  ).length;
 
   function toggleCollapsed() {
     setStoredCollapsed((prev) => {
@@ -106,7 +125,16 @@ export function Sidebar({ user }: SidebarProps) {
               }
             >
               <Icon className="h-5 w-5 shrink-0" />
-              {!collapsed && <span className="truncate">{item.label}</span>}
+              {!collapsed && (
+                <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                  <span className="truncate">{item.label}</span>
+                  {item.href === "/reminders" && dueSoonCount > 0 && (
+                    <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-danger px-1.5 text-xs font-medium text-white">
+                      {dueSoonCount}
+                    </span>
+                  )}
+                </span>
+              )}
             </Link>
           );
         })}

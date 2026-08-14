@@ -55,4 +55,10 @@ export const keys = {
       to?: string;
     }) => ["reports", "list", params ?? {}] as const,
   },
+  reminders: {
+    all: ["reminders"] as const,
+    list: (params?: { done?: boolean; cropSeasonId?: string; q?: string }) =>
+      ["reminders", "list", params ?? {}] as const,
+    detail: (id: string) => ["reminders", "detail", id] as const,
+  },
 } as const;
