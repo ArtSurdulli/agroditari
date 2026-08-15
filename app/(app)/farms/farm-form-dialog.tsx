@@ -1,18 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingButton } from "@/components/common/loading-button";
+import { EntityDialogHeader } from "@/components/common/entity-dialog-header";
 import { useCreateFarm, useUpdateFarm } from "@/hooks/use-farms";
+import { getEntityTheme } from "@/lib/entity-theme";
 import type { Farm } from "@/types/farm";
+
+const theme = getEntityTheme("farms");
 
 type FarmFormDialogProps = {
   open: boolean;
@@ -69,13 +67,12 @@ export function FarmFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Ndrysho fermën" : "Shto fermë"}
-          </DialogTitle>
-        </DialogHeader>
+        <EntityDialogHeader
+          entityKey="farms"
+          title={isEditing ? "Ndrysho fermën" : "Shto fermë"}
+        />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6 px-1 pt-1">
           <div className="space-y-1.5">
             <Label htmlFor="farm-name">Emri</Label>
             <Input
@@ -97,10 +94,15 @@ export function FarmFormDialog({
             />
           </div>
 
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && <p className="mt-1 text-sm text-danger">{error}</p>}
 
           <DialogFooter>
-            <LoadingButton type="submit" loading={pending}>
+            <LoadingButton
+              type="submit"
+              loading={pending}
+              className="hover:opacity-90"
+              style={{ backgroundColor: theme.color.solid }}
+            >
               {isEditing ? "Ruaj ndryshimet" : "Shto fermën"}
             </LoadingButton>
           </DialogFooter>

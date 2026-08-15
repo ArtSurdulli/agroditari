@@ -2,10 +2,13 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
-import { MoreVertical, Plus, Search, Sprout } from "lucide-react";
+import { MoreVertical, Plus, Search } from "lucide-react";
 import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { EntityCard } from "@/components/common/entity-card";
+import { EntityIconChip } from "@/components/common/entity-icon-chip";
+import { EntityTableRow } from "@/components/common/entity-table-row";
+import { LoadingState } from "@/components/common/loading-state";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -125,7 +128,11 @@ function CropSeasonsPageContent() {
         title="Sezonet"
         subtitle="Menaxho sezonet e kulturave në parcelat e tua."
         actions={
-          <Button onClick={openCreateForm}>
+          <Button
+            onClick={openCreateForm}
+            className="hover:opacity-90"
+            style={{ backgroundColor: entityTheme.seasons.color.solid }}
+          >
             <Plus className="h-4 w-4" />
             Shto sezon
           </Button>
@@ -198,7 +205,7 @@ function CropSeasonsPageContent() {
 
       <div className="mt-6">
         {isLoading ? (
-          <p className="text-sm text-text-secondary">Duke ngarkuar...</p>
+          <LoadingState entityKey="seasons" />
         ) : isError ? (
           <p className="text-sm text-danger">
             {error instanceof Error
@@ -208,17 +215,22 @@ function CropSeasonsPageContent() {
         ) : !seasons || seasons.length === 0 ? (
           isFiltered ? (
             <EmptyState
+              entityKey="seasons"
               icon={Search}
               title="Nuk u gjet asnjë sezon."
               description="Provo një kërkim tjetër."
             />
           ) : (
             <EmptyState
-              icon={Sprout}
+              entityKey="seasons"
               title="Ende s'ka sezone."
               description="Shto sezonin e parë të kulturës për të filluar."
               action={
-                <Button onClick={openCreateForm}>
+                <Button
+                  onClick={openCreateForm}
+                  className="hover:opacity-90"
+                  style={{ backgroundColor: entityTheme.seasons.color.solid }}
+                >
                   <Plus className="h-4 w-4" />
                   Shto sezon
                 </Button>
@@ -242,9 +254,12 @@ function CropSeasonsPageContent() {
               </TableHeader>
               <TableBody>
                 {seasons.map((season) => (
-                  <TableRow key={season.id}>
+                  <EntityTableRow key={season.id} entityKey="seasons">
                     <TableCell className="font-medium text-text-primary">
-                      {season.cropName}
+                      <div className="flex items-center gap-3">
+                        <EntityIconChip entityKey="seasons" />
+                        {season.cropName}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Link
@@ -277,7 +292,7 @@ function CropSeasonsPageContent() {
                         onDelete={() => setDeletingSeason(season)}
                       />
                     </TableCell>
-                  </TableRow>
+                  </EntityTableRow>
                 ))}
               </TableBody>
             </Table>

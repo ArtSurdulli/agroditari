@@ -4,6 +4,9 @@ import { useState } from "react";
 import { MoreVertical, Plus, Receipt } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { EntityCard } from "@/components/common/entity-card";
+import { EntityIconChip } from "@/components/common/entity-icon-chip";
+import { EntityTableRow } from "@/components/common/entity-table-row";
+import { LoadingState } from "@/components/common/loading-state";
 import { StatCard } from "@/components/common/stat-card";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +27,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMounted } from "@/hooks/use-mounted";
 import { useExpenses } from "@/hooks/use-expenses";
 import { useOpenOnFlag } from "@/hooks/use-open-on-flag";
+import { TAB_TO_SLUG } from "./season-tabs-utils";
 import { entityTheme } from "@/lib/entity-theme";
 import { expenseCategoryLabels } from "@/lib/validations/expense";
 import { ExpenseFormDialog } from "./expense-form-dialog";
@@ -58,7 +62,11 @@ export function SeasonExpenses({ cropSeasonId }: { cropSeasonId: string }) {
 
   // Quick-add ("+ Shto") deep link: /seasons/[id]?new=expenses opens the
   // create dialog straight away.
-  const [formOpen, setFormOpen] = useOpenOnFlag("new", "expenses");
+  const [formOpen, setFormOpen] = useOpenOnFlag(
+    "new",
+    "expenses",
+    `tab=${TAB_TO_SLUG.expenses}`
+  );
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(
@@ -87,7 +95,12 @@ export function SeasonExpenses({ cropSeasonId }: { cropSeasonId: string }) {
           Shpenzimet
         </h2>
         {expenses && expenses.length > 0 && (
-          <Button onClick={openCreateForm} size="sm">
+          <Button
+            onClick={openCreateForm}
+            size="sm"
+            className="hover:opacity-90"
+            style={{ backgroundColor: entityTheme.expenses.color.solid }}
+          >
             <Plus className="h-4 w-4" />
             Shto shpenzim
           </Button>
@@ -106,7 +119,7 @@ export function SeasonExpenses({ cropSeasonId }: { cropSeasonId: string }) {
 
       <div className="mt-4">
         {isLoading ? (
-          <p className="text-sm text-text-secondary">Duke ngarkuar...</p>
+          <LoadingState entityKey="expenses" />
         ) : isError ? (
           <p className="text-sm text-danger">
             {error instanceof Error
@@ -115,11 +128,15 @@ export function SeasonExpenses({ cropSeasonId }: { cropSeasonId: string }) {
           </p>
         ) : !expenses || expenses.length === 0 ? (
           <EmptyState
-            icon={Receipt}
+            entityKey="expenses"
             title="Ende s'ka shpenzime."
             description="Shto shpenzimin e parë për këtë sezon."
             action={
-              <Button onClick={openCreateForm}>
+              <Button
+                onClick={openCreateForm}
+                className="hover:opacity-90"
+                style={{ backgroundColor: entityTheme.expenses.color.solid }}
+              >
                 <Plus className="h-4 w-4" />
                 Shto shpenzim
               </Button>
@@ -139,9 +156,12 @@ export function SeasonExpenses({ cropSeasonId }: { cropSeasonId: string }) {
               </TableHeader>
               <TableBody>
                 {expenses.map((expense) => (
-                  <TableRow key={expense.id}>
+                  <EntityTableRow key={expense.id} entityKey="expenses">
                     <TableCell className="font-medium text-text-primary">
-                      {expenseCategoryLabels[expense.category]}
+                      <div className="flex items-center gap-3">
+                        <EntityIconChip entityKey="expenses" />
+                        {expenseCategoryLabels[expense.category]}
+                      </div>
                     </TableCell>
                     <TableCell className="max-w-xs truncate text-text-secondary">
                       {expense.description || "—"}
@@ -159,7 +179,7 @@ export function SeasonExpenses({ cropSeasonId }: { cropSeasonId: string }) {
                         onDelete={() => setDeletingExpense(expense)}
                       />
                     </TableCell>
-                  </TableRow>
+                  </EntityTableRow>
                 ))}
               </TableBody>
             </Table>

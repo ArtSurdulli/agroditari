@@ -3,13 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Plus, X } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/common/loading-button";
+import { EntityDialogHeader } from "@/components/common/entity-dialog-header";
 import {
   useCreateCropSeason,
   useUpdateCropSeason,
@@ -33,9 +28,12 @@ import {
   seasonStatusLabels,
   seasonStatusValues,
 } from "@/lib/validations/crop-season";
+import { getEntityTheme } from "@/lib/entity-theme";
 import type { CropSeasonInput } from "@/lib/validations/crop-season";
 import type { ApiError } from "@/lib/api/client";
 import type { CropSeason } from "@/types/crop-season";
+
+const theme = getEntityTheme("seasons");
 
 type CropSeasonFormDialogProps = {
   open: boolean;
@@ -148,13 +146,12 @@ export function CropSeasonFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Ndrysho sezonin" : "Shto sezon"}
-          </DialogTitle>
-        </DialogHeader>
+        <EntityDialogHeader
+          entityKey="seasons"
+          title={isEditing ? "Ndrysho sezonin" : "Shto sezon"}
+        />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6 px-1 pt-1">
           <div className="space-y-1.5">
             <Label htmlFor="season-parcel">Parcela</Label>
             <Select
@@ -270,7 +267,7 @@ export function CropSeasonFormDialog({
             )}
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 pt-2">
             <Label htmlFor="season-label">Sezoni</Label>
             <Input
               id="season-label"
@@ -310,7 +307,7 @@ export function CropSeasonFormDialog({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="season-sowing">Data e mbjelljes</Label>
               <Input
@@ -339,10 +336,15 @@ export function CropSeasonFormDialog({
             </div>
           </div>
 
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && <p className="mt-1 text-sm text-danger">{error}</p>}
 
           <DialogFooter>
-            <LoadingButton type="submit" loading={pending}>
+            <LoadingButton
+              type="submit"
+              loading={pending}
+              className="hover:opacity-90"
+              style={{ backgroundColor: theme.color.solid }}
+            >
               {isEditing ? "Ruaj ndryshimet" : "Shto sezonin"}
             </LoadingButton>
           </DialogFooter>

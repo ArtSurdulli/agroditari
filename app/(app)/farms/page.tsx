@@ -1,10 +1,13 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { MoreVertical, Plus, Search, Tractor } from "lucide-react";
+import { MoreVertical, Plus, Search } from "lucide-react";
 import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { EntityCard } from "@/components/common/entity-card";
+import { EntityIconChip } from "@/components/common/entity-icon-chip";
+import { EntityTableRow } from "@/components/common/entity-table-row";
+import { LoadingState } from "@/components/common/loading-state";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,9 +29,12 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMounted } from "@/hooks/use-mounted";
 import { useFarms } from "@/hooks/use-farms";
 import { useOpenOnFlag } from "@/hooks/use-open-on-flag";
+import { getEntityTheme } from "@/lib/entity-theme";
 import { FarmFormDialog } from "./farm-form-dialog";
 import { DeleteFarmDialog } from "./delete-farm-dialog";
 import type { Farm } from "@/types/farm";
+
+const theme = getEntityTheme("farms");
 
 export default function FarmsPage() {
   return (
@@ -79,7 +85,11 @@ function FarmsPageContent() {
         title="Fermat"
         subtitle="Menaxho fermat e tua."
         actions={
-          <Button onClick={openCreateForm}>
+          <Button
+            onClick={openCreateForm}
+            className="hover:opacity-90"
+            style={{ backgroundColor: theme.color.solid }}
+          >
             <Plus className="h-4 w-4" />
             Shto fermë
           </Button>
@@ -98,7 +108,7 @@ function FarmsPageContent() {
 
       <div className="mt-6">
         {isLoading ? (
-          <p className="text-sm text-text-secondary">Duke ngarkuar...</p>
+          <LoadingState entityKey="farms" />
         ) : isError ? (
           <p className="text-sm text-danger">
             {error instanceof Error
@@ -108,17 +118,22 @@ function FarmsPageContent() {
         ) : !farms || farms.length === 0 ? (
           debouncedSearch ? (
             <EmptyState
+              entityKey="farms"
               icon={Search}
               title="Nuk u gjet asnjë fermë."
               description="Provo një kërkim tjetër."
             />
           ) : (
             <EmptyState
-              icon={Tractor}
+              entityKey="farms"
               title="Ende s'ka ferma."
               description="Shto fermën tënde të parë për të filluar."
               action={
-                <Button onClick={openCreateForm}>
+                <Button
+                  onClick={openCreateForm}
+                  className="hover:opacity-90"
+                  style={{ backgroundColor: theme.color.solid }}
+                >
                   <Plus className="h-4 w-4" />
                   Shto fermë
                 </Button>
@@ -137,9 +152,12 @@ function FarmsPageContent() {
               </TableHeader>
               <TableBody>
                 {farms.map((farm) => (
-                  <TableRow key={farm.id}>
+                  <EntityTableRow key={farm.id} entityKey="farms">
                     <TableCell className="font-medium text-text-primary">
-                      {farm.name}
+                      <div className="flex items-center gap-3">
+                        <EntityIconChip entityKey="farms" />
+                        {farm.name}
+                      </div>
                     </TableCell>
                     <TableCell className="text-text-secondary">
                       {farm.location || "—"}
@@ -151,7 +169,7 @@ function FarmsPageContent() {
                         onDelete={() => setDeletingFarm(farm)}
                       />
                     </TableCell>
-                  </TableRow>
+                  </EntityTableRow>
                 ))}
               </TableBody>
             </Table>
