@@ -86,10 +86,10 @@ npm install
 Copy the example file and fill in your own values:
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
-`.env.local` is git-ignored and must never be committed.
+`.env` is git-ignored and must never be committed.
 
 ## Usage
 
