@@ -2,13 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,15 +13,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LoadingButton } from "@/components/common/loading-button";
+import { EntityDialogHeader } from "@/components/common/entity-dialog-header";
 import { useCreateExpense, useUpdateExpense } from "@/hooks/use-expenses";
 import { useCropSeasons } from "@/hooks/use-crop-seasons";
 import {
   expenseCategoryLabels,
   expenseCategoryValues,
 } from "@/lib/validations/expense";
+import { getEntityTheme } from "@/lib/entity-theme";
 import type { ExpenseInput } from "@/lib/validations/expense";
 import type { ApiError } from "@/lib/api/client";
 import type { Expense } from "@/types/expense";
+
+const theme = getEntityTheme("expenses");
 
 type ExpenseFormDialogProps = {
   open: boolean;
@@ -151,13 +149,12 @@ export function ExpenseFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Ndrysho shpenzimin" : "Shto shpenzim"}
-          </DialogTitle>
-        </DialogHeader>
+        <EntityDialogHeader
+          entityKey="expenses"
+          title={isEditing ? "Ndrysho shpenzimin" : "Shto shpenzim"}
+        />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6 px-1 pt-1">
           {!lockedCropSeasonId && (
             <div className="space-y-1.5">
               <Label htmlFor="expense-season">Sezoni</Label>
@@ -230,7 +227,7 @@ export function ExpenseFormDialog({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="expense-quantity">Sasia</Label>
               <Input
@@ -261,23 +258,22 @@ export function ExpenseFormDialog({
                 <p className="text-sm text-danger">{fieldErrors.unitPrice}</p>
               )}
             </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="expense-amount">Shuma (€)</Label>
-            <Input
-              id="expense-amount"
-              type="number"
-              step="0.01"
-              min="0"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
-              placeholder="0.00"
-            />
-            {fieldErrors.amount && (
-              <p className="text-sm text-danger">{fieldErrors.amount}</p>
-            )}
+            <div className="space-y-1.5">
+              <Label htmlFor="expense-amount">Shuma (€)</Label>
+              <Input
+                id="expense-amount"
+                type="number"
+                step="0.01"
+                min="0"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+                placeholder="0.00"
+              />
+              {fieldErrors.amount && (
+                <p className="text-sm text-danger">{fieldErrors.amount}</p>
+              )}
+            </div>
           </div>
 
           <div className="space-y-1.5">
@@ -294,10 +290,15 @@ export function ExpenseFormDialog({
             )}
           </div>
 
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && <p className="mt-1 text-sm text-danger">{error}</p>}
 
           <DialogFooter>
-            <LoadingButton type="submit" loading={pending}>
+            <LoadingButton
+              type="submit"
+              loading={pending}
+              className="hover:opacity-90"
+              style={{ backgroundColor: theme.color.solid }}
+            >
               {isEditing ? "Ruaj ndryshimet" : "Shto shpenzimin"}
             </LoadingButton>
           </DialogFooter>

@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUp, Minus, type LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import type { EntityColor } from "@/lib/entity-theme";
 import { cn } from "@/lib/utils";
 
 type DeltaTone = "up" | "down" | "neutral";
@@ -10,6 +11,9 @@ type StatCardProps = {
   delta?: string;
   deltaTone?: DeltaTone;
   icon?: LucideIcon;
+  // When set, tints the icon tile and adds a left accent bar in the given
+  // entity's color instead of the generic primary green.
+  color?: EntityColor;
 };
 
 const toneStyles: Record<DeltaTone, string> = {
@@ -37,11 +41,15 @@ export function StatCard({
   delta,
   deltaTone = "neutral",
   icon: Icon,
+  color,
 }: StatCardProps) {
   const ToneIcon = toneIcons[deltaTone];
 
   return (
-    <Card>
+    <Card
+      className={cn(color && "border-l-4")}
+      style={color ? { borderLeftColor: color.border } : undefined}
+    >
       <CardContent className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm text-text-secondary">{label}</p>
@@ -61,8 +69,14 @@ export function StatCard({
           )}
         </div>
         {Icon && (
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-light">
-            <Icon className="h-5 w-5 text-primary" />
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-light"
+            style={color ? { backgroundColor: color.tint } : undefined}
+          >
+            <Icon
+              className="h-5 w-5 text-primary"
+              style={color ? { color: color.solid } : undefined}
+            />
           </div>
         )}
       </CardContent>

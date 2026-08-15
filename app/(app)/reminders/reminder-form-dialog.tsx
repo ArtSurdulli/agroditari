@@ -2,13 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,13 +14,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LoadingButton } from "@/components/common/loading-button";
+import { EntityDialogHeader } from "@/components/common/entity-dialog-header";
 import { useCreateReminder, useUpdateReminder } from "@/hooks/use-reminders";
 import { useCropSeasons } from "@/hooks/use-crop-seasons";
+import { getEntityTheme } from "@/lib/entity-theme";
 import type { ReminderInput } from "@/lib/validations/reminder";
 import type { ApiError } from "@/lib/api/client";
 import type { Reminder } from "@/types/reminder";
 
 const NONE_SEASON_VALUE = "none";
+const theme = getEntityTheme("reminders");
 
 type ReminderFormDialogProps = {
   open: boolean;
@@ -107,13 +104,12 @@ export function ReminderFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Ndrysho kujtesën" : "Shto kujtesë"}
-          </DialogTitle>
-        </DialogHeader>
+        <EntityDialogHeader
+          entityKey="reminders"
+          title={isEditing ? "Ndrysho kujtesën" : "Shto kujtesë"}
+        />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6 px-1 pt-1">
           <div className="space-y-1.5">
             <Label htmlFor="reminder-title">Titulli</Label>
             <Input
@@ -204,10 +200,15 @@ export function ReminderFormDialog({
             </label>
           )}
 
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && <p className="mt-1 text-sm text-danger">{error}</p>}
 
           <DialogFooter>
-            <LoadingButton type="submit" loading={pending}>
+            <LoadingButton
+              type="submit"
+              loading={pending}
+              className="hover:opacity-90"
+              style={{ backgroundColor: theme.color.solid }}
+            >
               {isEditing ? "Ruaj ndryshimet" : "Shto kujtesën"}
             </LoadingButton>
           </DialogFooter>
