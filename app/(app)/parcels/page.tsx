@@ -1,10 +1,13 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { Map, MoreVertical, Plus, Search } from "lucide-react";
+import { MoreVertical, Plus, Search } from "lucide-react";
 import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { EntityCard } from "@/components/common/entity-card";
+import { EntityIconChip } from "@/components/common/entity-icon-chip";
+import { EntityTableRow } from "@/components/common/entity-table-row";
+import { LoadingState } from "@/components/common/loading-state";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,9 +37,12 @@ import { useMounted } from "@/hooks/use-mounted";
 import { useParcels } from "@/hooks/use-parcels";
 import { useFarms } from "@/hooks/use-farms";
 import { useOpenOnFlag } from "@/hooks/use-open-on-flag";
+import { getEntityTheme } from "@/lib/entity-theme";
 import { ParcelFormDialog } from "./parcel-form-dialog";
 import { DeleteParcelDialog } from "./delete-parcel-dialog";
 import type { Parcel } from "@/types/parcel";
+
+const theme = getEntityTheme("parcels");
 
 const ALL_FARMS_VALUE = "all";
 
@@ -102,7 +108,11 @@ function ParcelsPageContent() {
         title="Parcelat"
         subtitle="Menaxho parcelat e fermave të tua."
         actions={
-          <Button onClick={openCreateForm}>
+          <Button
+            onClick={openCreateForm}
+            className="hover:opacity-90"
+            style={{ backgroundColor: theme.color.solid }}
+          >
             <Plus className="h-4 w-4" />
             Shto parcelë
           </Button>
@@ -145,7 +155,7 @@ function ParcelsPageContent() {
 
       <div className="mt-6">
         {isLoading ? (
-          <p className="text-sm text-text-secondary">Duke ngarkuar...</p>
+          <LoadingState entityKey="parcels" />
         ) : isError ? (
           <p className="text-sm text-danger">
             {error instanceof Error
@@ -155,17 +165,22 @@ function ParcelsPageContent() {
         ) : !parcels || parcels.length === 0 ? (
           isFiltered ? (
             <EmptyState
+              entityKey="parcels"
               icon={Search}
               title="Nuk u gjet asnjë parcelë."
               description="Provo një kërkim tjetër."
             />
           ) : (
             <EmptyState
-              icon={Map}
+              entityKey="parcels"
               title="Ende s'ka parcela."
               description="Shto parcelën tënde të parë për të filluar."
               action={
-                <Button onClick={openCreateForm}>
+                <Button
+                  onClick={openCreateForm}
+                  className="hover:opacity-90"
+                  style={{ backgroundColor: theme.color.solid }}
+                >
                   <Plus className="h-4 w-4" />
                   Shto parcelë
                 </Button>
@@ -186,9 +201,12 @@ function ParcelsPageContent() {
               </TableHeader>
               <TableBody>
                 {parcels.map((parcel) => (
-                  <TableRow key={parcel.id}>
+                  <EntityTableRow key={parcel.id} entityKey="parcels">
                     <TableCell className="font-medium text-text-primary">
-                      {parcel.name}
+                      <div className="flex items-center gap-3">
+                        <EntityIconChip entityKey="parcels" />
+                        {parcel.name}
+                      </div>
                     </TableCell>
                     <TableCell className="text-text-secondary">
                       {parcel.farmName}
@@ -206,7 +224,7 @@ function ParcelsPageContent() {
                         onDelete={() => setDeletingParcel(parcel)}
                       />
                     </TableCell>
-                  </TableRow>
+                  </EntityTableRow>
                 ))}
               </TableBody>
             </Table>

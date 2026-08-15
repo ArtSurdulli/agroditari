@@ -2,13 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,10 +13,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LoadingButton } from "@/components/common/loading-button";
+import { EntityDialogHeader } from "@/components/common/entity-dialog-header";
 import { useCreateParcel, useUpdateParcel } from "@/hooks/use-parcels";
 import { useFarms } from "@/hooks/use-farms";
+import { getEntityTheme } from "@/lib/entity-theme";
 import type { ApiError } from "@/lib/api/client";
 import type { Parcel } from "@/types/parcel";
+
+const theme = getEntityTheme("parcels");
 
 type ParcelFormDialogProps = {
   open: boolean;
@@ -108,13 +106,12 @@ export function ParcelFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Ndrysho parcelën" : "Shto parcelë"}
-          </DialogTitle>
-        </DialogHeader>
+        <EntityDialogHeader
+          entityKey="parcels"
+          title={isEditing ? "Ndrysho parcelën" : "Shto parcelë"}
+        />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6 px-1 pt-1">
           <div className="space-y-1.5">
             <Label htmlFor="parcel-farm">Ferma</Label>
             <Select
@@ -185,10 +182,15 @@ export function ParcelFormDialog({
             )}
           </div>
 
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && <p className="mt-1 text-sm text-danger">{error}</p>}
 
           <DialogFooter>
-            <LoadingButton type="submit" loading={pending}>
+            <LoadingButton
+              type="submit"
+              loading={pending}
+              className="hover:opacity-90"
+              style={{ backgroundColor: theme.color.solid }}
+            >
               {isEditing ? "Ruaj ndryshimet" : "Shto parcelën"}
             </LoadingButton>
           </DialogFooter>

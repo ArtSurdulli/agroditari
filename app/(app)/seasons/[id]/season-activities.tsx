@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { MoreVertical, Notebook, Plus } from "lucide-react";
+import { MoreVertical, Plus } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { EntityCard } from "@/components/common/entity-card";
+import { EntityIconChip } from "@/components/common/entity-icon-chip";
+import { EntityTableRow } from "@/components/common/entity-table-row";
+import { LoadingState } from "@/components/common/loading-state";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -23,10 +26,14 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMounted } from "@/hooks/use-mounted";
 import { useActivities } from "@/hooks/use-activities";
 import { useOpenOnFlag } from "@/hooks/use-open-on-flag";
+import { TAB_TO_SLUG } from "./season-tabs-utils";
 import { activityTypeLabels } from "@/lib/validations/activity";
+import { getEntityTheme } from "@/lib/entity-theme";
 import { ActivityFormDialog } from "./activity-form-dialog";
 import { DeleteActivityDialog } from "./delete-activity-dialog";
 import type { Activity } from "@/types/activity";
+
+const theme = getEntityTheme("activities");
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString("sq-AL");
@@ -49,7 +56,11 @@ export function SeasonActivities({ cropSeasonId }: { cropSeasonId: string }) {
 
   // Quick-add ("+ Shto") deep link: /seasons/[id]?new=activities opens the
   // create dialog straight away.
-  const [formOpen, setFormOpen] = useOpenOnFlag("new", "activities");
+  const [formOpen, setFormOpen] = useOpenOnFlag(
+    "new",
+    "activities",
+    `tab=${TAB_TO_SLUG.activities}`
+  );
 
   const [editingActivity, setEditingActivity] = useState<Activity | null>(
     null
@@ -75,7 +86,12 @@ export function SeasonActivities({ cropSeasonId }: { cropSeasonId: string }) {
           Aktivitetet
         </h2>
         {activities && activities.length > 0 && (
-          <Button onClick={openCreateForm} size="sm">
+          <Button
+            onClick={openCreateForm}
+            size="sm"
+            className="hover:opacity-90"
+            style={{ backgroundColor: theme.color.solid }}
+          >
             <Plus className="h-4 w-4" />
             Shto aktivitet
           </Button>
@@ -84,7 +100,7 @@ export function SeasonActivities({ cropSeasonId }: { cropSeasonId: string }) {
 
       <div className="mt-4">
         {isLoading ? (
-          <p className="text-sm text-text-secondary">Duke ngarkuar...</p>
+          <LoadingState entityKey="activities" />
         ) : isError ? (
           <p className="text-sm text-danger">
             {error instanceof Error
@@ -93,11 +109,15 @@ export function SeasonActivities({ cropSeasonId }: { cropSeasonId: string }) {
           </p>
         ) : !activities || activities.length === 0 ? (
           <EmptyState
-            icon={Notebook}
+            entityKey="activities"
             title="Ende s'ka aktivitete."
             description="Shto aktivitetin e parë për këtë sezon."
             action={
-              <Button onClick={openCreateForm}>
+              <Button
+                onClick={openCreateForm}
+                className="hover:opacity-90"
+                style={{ backgroundColor: theme.color.solid }}
+              >
                 <Plus className="h-4 w-4" />
                 Shto aktivitet
               </Button>
@@ -116,9 +136,12 @@ export function SeasonActivities({ cropSeasonId }: { cropSeasonId: string }) {
               </TableHeader>
               <TableBody>
                 {activities.map((activity) => (
-                  <TableRow key={activity.id}>
+                  <EntityTableRow key={activity.id} entityKey="activities">
                     <TableCell className="font-medium text-text-primary">
-                      {activityTypeLabels[activity.activityType]}
+                      <div className="flex items-center gap-3">
+                        <EntityIconChip entityKey="activities" />
+                        {activityTypeLabels[activity.activityType]}
+                      </div>
                     </TableCell>
                     <TableCell className="text-text-secondary">
                       {formatDate(activity.date)}
@@ -133,7 +156,7 @@ export function SeasonActivities({ cropSeasonId }: { cropSeasonId: string }) {
                         onDelete={() => setDeletingActivity(activity)}
                       />
                     </TableCell>
-                  </TableRow>
+                  </EntityTableRow>
                 ))}
               </TableBody>
             </Table>

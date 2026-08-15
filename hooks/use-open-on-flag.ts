@@ -17,9 +17,19 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 //   3. Clean up the URL in an effect, gated on the flag — never on `open`,
 //      so closing the dialog manually never re-triggers a replace, and the
 //      cleanup never closes a dialog the user (or step 1/2) just opened.
+//
+// `replacementSearch` (optional): the query string to replace the flag with
+// during cleanup, instead of stripping to a bare pathname. Plain callers
+// (e.g. /farms?new=1) don't need this — dropping the whole query is fine.
+// Callers whose flag also selects other UI (e.g. the season detail tabs,
+// where `?new=harvests` both opens a dialog AND picks the tab) must pass the
+// param that encodes that selection (e.g. "tab=korrje"), so cleanup doesn't
+// erase information a server re-render needs to re-derive the same UI state
+// — otherwise the page would snap back to its default on cleanup.
 export function useOpenOnFlag(
   paramName: string,
-  matchValue = "1"
+  matchValue = "1",
+  replacementSearch?: string
 ): [boolean, Dispatch<SetStateAction<boolean>>] {
   const router = useRouter();
   const pathname = usePathname();
@@ -37,9 +47,11 @@ export function useOpenOnFlag(
 
   useEffect(() => {
     if (flag) {
-      router.replace(pathname);
+      router.replace(
+        replacementSearch ? `${pathname}?${replacementSearch}` : pathname
+      );
     }
-  }, [flag, pathname, router]);
+  }, [flag, pathname, router, replacementSearch]);
 
   return [open, setOpen];
 }

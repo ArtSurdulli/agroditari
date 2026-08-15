@@ -1,10 +1,13 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { Bell, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { EntityCard } from "@/components/common/entity-card";
+import { EntityIconChip } from "@/components/common/entity-icon-chip";
+import { EntityTableRow } from "@/components/common/entity-table-row";
+import { LoadingState } from "@/components/common/loading-state";
 import { ConfirmDeleteDialog } from "@/components/common/confirm-delete-dialog";
 import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { Button } from "@/components/ui/button";
@@ -31,8 +34,11 @@ import {
   useToggleReminderDone,
 } from "@/hooks/use-reminders";
 import { useOpenOnFlag } from "@/hooks/use-open-on-flag";
+import { getEntityTheme } from "@/lib/entity-theme";
 import { ReminderFormDialog } from "./reminder-form-dialog";
 import type { Reminder } from "@/types/reminder";
+
+const theme = getEntityTheme("reminders");
 
 const DONE_FILTER_ALL = "all";
 const DONE_FILTER_PENDING = "pending";
@@ -168,7 +174,11 @@ function RemindersPageContent() {
         title="Kujtesa"
         subtitle="Mos harro detyrat e ardhshme të fermës."
         actions={
-          <Button onClick={openCreateForm}>
+          <Button
+            onClick={openCreateForm}
+            className="hover:opacity-90"
+            style={{ backgroundColor: theme.color.solid }}
+          >
             <Plus className="h-4 w-4" />
             Shto kujtesë
           </Button>
@@ -196,7 +206,7 @@ function RemindersPageContent() {
 
       <div className="mt-6">
         {isLoading ? (
-          <p className="text-sm text-text-secondary">Duke ngarkuar...</p>
+          <LoadingState entityKey="reminders" />
         ) : isError ? (
           <p className="text-sm text-danger">
             {error instanceof Error
@@ -206,17 +216,21 @@ function RemindersPageContent() {
         ) : !reminders || reminders.length === 0 ? (
           isFiltered ? (
             <EmptyState
-              icon={Bell}
+              entityKey="reminders"
               title="Nuk ka kujtesa për këtë filtër."
               description="Provo një filtër tjetër."
             />
           ) : (
             <EmptyState
-              icon={Bell}
+              entityKey="reminders"
               title="Ende s'ka kujtesa."
               description="Shto kujtesën e parë për të filluar."
               action={
-                <Button onClick={openCreateForm}>
+                <Button
+                  onClick={openCreateForm}
+                  className="hover:opacity-90"
+                  style={{ backgroundColor: theme.color.solid }}
+                >
                   <Plus className="h-4 w-4" />
                   Shto kujtesë
                 </Button>
@@ -239,7 +253,7 @@ function RemindersPageContent() {
                 {reminders.map((reminder) => {
                   const status = getReminderStatus(reminder);
                   return (
-                    <TableRow key={reminder.id}>
+                    <EntityTableRow key={reminder.id} entityKey="reminders">
                       <TableCell>
                         <input
                           type="checkbox"
@@ -255,9 +269,12 @@ function RemindersPageContent() {
                         />
                       </TableCell>
                       <TableCell className="font-medium text-text-primary">
-                        <div className="flex items-center gap-2">
-                          <ReminderTitle reminder={reminder} />
-                          <ReminderStatusBadge status={status} />
+                        <div className="flex items-center gap-3">
+                          <EntityIconChip entityKey="reminders" />
+                          <div className="flex items-center gap-2">
+                            <ReminderTitle reminder={reminder} />
+                            <ReminderStatusBadge status={status} />
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell className="text-text-secondary">
@@ -273,7 +290,7 @@ function RemindersPageContent() {
                           onDelete={() => setDeletingReminder(reminder)}
                         />
                       </TableCell>
-                    </TableRow>
+                    </EntityTableRow>
                   );
                 })}
               </TableBody>

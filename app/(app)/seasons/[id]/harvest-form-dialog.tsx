@@ -2,13 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,12 +13,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LoadingButton } from "@/components/common/loading-button";
+import { EntityDialogHeader } from "@/components/common/entity-dialog-header";
 import { useCreateHarvest, useUpdateHarvest } from "@/hooks/use-harvests";
 import { useCropSeasons } from "@/hooks/use-crop-seasons";
 import { unitTypeLabels, unitTypeValues } from "@/lib/validations/harvest";
+import { getEntityTheme } from "@/lib/entity-theme";
 import type { HarvestInput } from "@/lib/validations/harvest";
 import type { ApiError } from "@/lib/api/client";
 import type { Harvest } from "@/types/harvest";
+
+const theme = getEntityTheme("harvests");
 
 type HarvestFormDialogProps = {
   open: boolean;
@@ -142,13 +140,12 @@ export function HarvestFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Ndrysho korrjen" : "Shto korrje"}
-          </DialogTitle>
-        </DialogHeader>
+        <EntityDialogHeader
+          entityKey="harvests"
+          title={isEditing ? "Ndrysho korrjen" : "Shto korrje"}
+        />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6 px-1 pt-1">
           {!lockedCropSeasonId && (
             <div className="space-y-1.5">
               <Label htmlFor="harvest-season">Sezoni</Label>
@@ -182,7 +179,7 @@ export function HarvestFormDialog({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="harvest-quantity">Sasia</Label>
               <Input
@@ -225,7 +222,7 @@ export function HarvestFormDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="harvest-unit-price">Çmimi/njësi (€)</Label>
               <Input
@@ -272,10 +269,15 @@ export function HarvestFormDialog({
             )}
           </div>
 
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && <p className="mt-1 text-sm text-danger">{error}</p>}
 
           <DialogFooter>
-            <LoadingButton type="submit" loading={pending}>
+            <LoadingButton
+              type="submit"
+              loading={pending}
+              className="hover:opacity-90"
+              style={{ backgroundColor: theme.color.solid }}
+            >
               {isEditing ? "Ruaj ndryshimet" : "Shto korrjen"}
             </LoadingButton>
           </DialogFooter>
