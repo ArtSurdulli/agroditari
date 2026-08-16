@@ -3,12 +3,11 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { withApiHandler, apiError } from "@/lib/api/response";
 import { reportsQuerySchema } from "@/lib/validations/report";
-import type {
-  ReportQuantity,
-  ReportResponse,
-  ReportSeasonRow,
-  ReportSummary,
-} from "@/types/report";
+import {
+  computeReportSummary,
+  computeSeasonCalculation,
+} from "@/lib/reports/calculations";
+import type { ReportResponse, ReportSeasonRow } from "@/types/report";
 
 // Reports are read/compute only — there is no writable "report" entity, no
 // schema change, and no POST/PATCH/DELETE here.
@@ -88,51 +87,15 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   });
 
   const rows: ReportSeasonRow[] = seasons.map((season) => {
-    // Shpenzime totale = SUM(expense.amount)
-    const totalCost = season.expenses.reduce(
-      (sum, expense) => sum + Number(expense.amount),
-      0
-    );
-    // Të ardhura = SUM(harvest.revenue), revenue may be null → treat as 0
-    const totalRevenue = season.harvests.reduce(
-      (sum, harvest) => sum + Number(harvest.revenue ?? 0),
-      0
-    );
-
-    // Sasia e korrur = SUM(harvest.quantity), grouped by unit — never summed
-    // across different units.
-    const quantityByUnit = new Map<string, number>();
-    for (const harvest of season.harvests) {
-      quantityByUnit.set(
-        harvest.unit,
-        (quantityByUnit.get(harvest.unit) ?? 0) + Number(harvest.quantity)
-      );
-    }
-    const harvestedQuantity: ReportQuantity[] = Array.from(
-      quantityByUnit.entries()
-    ).map(([unit, quantity]) => ({ unit, quantity }));
-
-    // Kosto/njësi and Rendimenti both need ONE coherent quantity number,
-    // which only exists when every harvest in the season used the same
-    // unit — with zero or mixed units they stay "—" (null).
-    const singleUnit =
-      harvestedQuantity.length === 1 ? harvestedQuantity[0] : null;
-
-    // Fitimi neto = Të ardhura − Shpenzime totale
-    const netProfit = totalRevenue - totalCost;
-    // Marxhini % = (Fitimi neto / Të ardhura) × 100, "—" if income = 0
-    const marginPct =
-      totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : null;
-    // Kosto/njësi = Shpenzime totale / Sasia e korrur, "—" if quantity = 0
-    const costPerUnit =
-      singleUnit && singleUnit.quantity > 0
-        ? totalCost / singleUnit.quantity
-        : null;
-
-    const areaHa = Number(season.parcel.areaHa);
-    // Rendimenti = Sasia e korrur / parcel.areaHa, "—" if area = 0
-    const yieldPerHa =
-      singleUnit && areaHa > 0 ? singleUnit.quantity / areaHa : null;
+    const calculation = computeSeasonCalculation({
+      expenseAmounts: season.expenses.map((expense) => Number(expense.amount)),
+      harvests: season.harvests.map((harvest) => ({
+        unit: harvest.unit,
+        quantity: Number(harvest.quantity),
+        revenue: harvest.revenue !== null ? Number(harvest.revenue) : null,
+      })),
+      areaHa: Number(season.parcel.areaHa),
+    });
 
     return {
       seasonId: season.id,
@@ -140,58 +103,12 @@ export const GET = withApiHandler(async (request: NextRequest) => {
       cropName: season.crop.name,
       parcelName: season.parcel.name,
       farmName: season.parcel.farm.name,
-      areaHa,
-      totalCost,
-      totalRevenue,
-      harvestedQuantity,
-      netProfit,
-      marginPct,
-      costPerUnit,
-      costPerUnitUnit: singleUnit ? singleUnit.unit : null,
-      yieldPerHa,
-      yieldUnit: singleUnit ? singleUnit.unit : null,
+      areaHa: Number(season.parcel.areaHa),
+      ...calculation,
     };
   });
 
-  const totalRevenue = rows.reduce((sum, row) => sum + row.totalRevenue, 0);
-  const totalCost = rows.reduce((sum, row) => sum + row.totalCost, 0);
-  const netProfit = totalRevenue - totalCost;
-  // Overall margin = total profit / total revenue × 100
-  const marginPct = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : null;
-
-  // Overall cost/unit is only meaningful when every season contributing a
-  // valid per-season cost/unit shares the SAME harvest unit — otherwise
-  // summing quantities would mix units, so it stays "—".
-  const eligible = rows.filter(
-    (row) => row.costPerUnitUnit !== null && row.costPerUnit !== null
-  );
-  const distinctUnits = new Set(eligible.map((row) => row.costPerUnitUnit));
-  let overallCostPerUnit: number | null = null;
-  let overallCostPerUnitUnit: string | null = null;
-  if (eligible.length > 0 && distinctUnits.size === 1) {
-    const unit = eligible[0].costPerUnitUnit;
-    const costSum = eligible.reduce((sum, row) => sum + row.totalCost, 0);
-    const qtySum = eligible.reduce(
-      (sum, row) =>
-        sum +
-        (row.harvestedQuantity.find((h) => h.unit === unit)?.quantity ?? 0),
-      0
-    );
-    if (qtySum > 0) {
-      overallCostPerUnit = costSum / qtySum;
-      overallCostPerUnitUnit = unit;
-    }
-  }
-
-  const summary: ReportSummary = {
-    seasonsCount: rows.length,
-    totalRevenue,
-    totalCost,
-    netProfit,
-    marginPct,
-    costPerUnit: overallCostPerUnit,
-    costPerUnitUnit: overallCostPerUnitUnit,
-  };
+  const summary = computeReportSummary(rows);
 
   const response: ReportResponse = { rows, summary };
   return NextResponse.json(response);
