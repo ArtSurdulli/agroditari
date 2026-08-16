@@ -9,6 +9,7 @@ import {
   Tractor,
   type LucideIcon,
 } from "lucide-react";
+import type { CSSProperties } from "react";
 
 export type EntityKey =
   | "farms"
@@ -136,4 +137,15 @@ export const entityTheme: Record<EntityKey, EntityTheme> = {
 
 export function getEntityTheme(key: EntityKey): EntityTheme {
   return entityTheme[key];
+}
+
+// Scopes the shared focus-ring color (--entity-accent, read by --color-ring
+// in globals.css) to the entity's theme. Apply to a dialog's root so its
+// Input/Textarea/SelectTrigger focus in the entity color instead of the
+// default green. Does NOT cover the Select dropdown's highlighted-option
+// background — that portals to <body>, past this variable's reach, so it's
+// themed separately via SelectContent's entityKey prop + the [data-entity]
+// rules in globals.css.
+export function entityAccentStyle(theme: EntityTheme): CSSProperties {
+  return { "--entity-accent": theme.color.border } as CSSProperties;
 }

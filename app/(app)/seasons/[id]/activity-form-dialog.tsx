@@ -15,13 +15,14 @@ import {
 } from "@/components/ui/select";
 import { LoadingButton } from "@/components/common/loading-button";
 import { EntityDialogHeader } from "@/components/common/entity-dialog-header";
+import { SelectLoadingItem } from "@/components/common/select-loading-item";
 import { useCreateActivity, useUpdateActivity } from "@/hooks/use-activities";
 import { useCropSeasons } from "@/hooks/use-crop-seasons";
 import {
   activityTypeLabels,
   activityTypeValues,
 } from "@/lib/validations/activity";
-import { getEntityTheme } from "@/lib/entity-theme";
+import { entityAccentStyle, getEntityTheme } from "@/lib/entity-theme";
 import type { ActivityInput } from "@/lib/validations/activity";
 import type { ApiError } from "@/lib/api/client";
 import type { Activity } from "@/types/activity";
@@ -66,7 +67,7 @@ export function ActivityFormDialog({
     }
   }
 
-  const { data: seasons } = useCropSeasons();
+  const { data: seasons, isLoading: seasonsLoading } = useCropSeasons();
   const createActivity = useCreateActivity();
   const updateActivity = useUpdateActivity();
 
@@ -107,7 +108,7 @@ export function ActivityFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent style={entityAccentStyle(theme)}>
         <EntityDialogHeader
           entityKey="activities"
           title={isEditing ? "Ndrysho aktivitetin" : "Shto aktivitet"}
@@ -130,13 +131,17 @@ export function ActivityFormDialog({
                 <SelectTrigger id="activity-season" className="w-full">
                   <SelectValue placeholder="Zgjidh sezonin" />
                 </SelectTrigger>
-                <SelectContent>
-                  {seasons?.map((season) => (
-                    <SelectItem key={season.id} value={season.id}>
-                      {season.cropName} — {season.parcelName} (
-                      {season.season})
-                    </SelectItem>
-                  ))}
+                <SelectContent entityKey="activities">
+                  {seasonsLoading ? (
+                    <SelectLoadingItem />
+                  ) : (
+                    seasons?.map((season) => (
+                      <SelectItem key={season.id} value={season.id}>
+                        {season.cropName} — {season.parcelName} (
+                        {season.season})
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               {fieldErrors.cropSeasonId && (
@@ -160,7 +165,7 @@ export function ActivityFormDialog({
               <SelectTrigger id="activity-type" className="w-full">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent entityKey="activities">
                 {activityTypeValues.map((value) => (
                   <SelectItem key={value} value={value}>
                     {activityTypeLabels[value]}

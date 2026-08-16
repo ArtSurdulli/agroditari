@@ -45,11 +45,27 @@ export const GET = withApiHandler(async (request: NextRequest) => {
       ...(status ? { status } : {}),
       ...(q ? { season: { contains: q, mode: "insensitive" as const } } : {}),
     },
-    include: seasonInclude,
+    include: {
+      ...seasonInclude,
+      // Row-summary rollups for the list — lightweight selects, one query
+      // instead of N requests per row. Never summed across units (that only
+      // applies to harvest quantity; revenue/expenses are already euros).
+      expenses: { select: { amount: true } },
+      harvests: { select: { revenue: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 
-  return NextResponse.json(seasons.map(serializeCropSeason));
+  const seasonsWithStats = seasons.map(({ expenses, harvests, ...season }) => ({
+    ...serializeCropSeason(season),
+    totalExpenses: expenses.reduce((sum, expense) => sum + Number(expense.amount), 0),
+    totalRevenue: harvests.reduce(
+      (sum, harvest) => sum + Number(harvest.revenue ?? 0),
+      0
+    ),
+  }));
+
+  return NextResponse.json(seasonsWithStats);
 });
 
 export const POST = withApiHandler(async (request: NextRequest) => {

@@ -9,6 +9,9 @@ type EntityCardProps = {
   // e.g. a struck-through title for a completed reminder.
   title: React.ReactNode;
   subtitle?: string | null;
+  // A third, smaller/muted line below the subtitle — for secondary summary
+  // info (e.g. row-level stats) that shouldn't compete with the title.
+  meta?: React.ReactNode;
   badge?: string;
   right?: React.ReactNode;
   // Makes the whole card navigate to a detail page. Implemented as a
@@ -23,6 +26,7 @@ export function EntityCard({
   entityKey,
   title,
   subtitle,
+  meta,
   badge,
   right,
   href,
@@ -69,6 +73,9 @@ export function EntityCard({
           >
             {subtitle}
           </p>
+        )}
+        {meta && (
+          <p className="truncate text-xs text-text-secondary">{meta}</p>
         )}
       </div>
       {badge && (

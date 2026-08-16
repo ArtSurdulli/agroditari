@@ -8,7 +8,8 @@ import { EmptyState } from "@/components/common/empty-state";
 import { EntityCard } from "@/components/common/entity-card";
 import { EntityIconChip } from "@/components/common/entity-icon-chip";
 import { EntityTableRow } from "@/components/common/entity-table-row";
-import { LoadingState } from "@/components/common/loading-state";
+import { ListSkeleton } from "@/components/common/list-skeleton";
+import { SelectLoadingItem } from "@/components/common/select-loading-item";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,6 +53,30 @@ function formatDate(value: string | null) {
   return new Date(value).toLocaleDateString("sq-AL");
 }
 
+function formatEuro(amount: number) {
+  return `${amount.toLocaleString("sq-AL", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} €`;
+}
+
+// Compact per-row financial summary, e.g. "Shpenzime 150,00 € · Të ardhura
+// 320,00 € · Fitim 170,00 €" — reused for both the desktop columns and the
+// mobile card's meta line. Net only shows once there's some actual activity
+// (never fabricated for a season with nothing recorded yet).
+function seasonFinancialMeta(season: CropSeason) {
+  const totalExpenses = season.totalExpenses ?? 0;
+  const totalRevenue = season.totalRevenue ?? 0;
+  const parts = [
+    `Shpenzime ${formatEuro(totalExpenses)}`,
+    `Të ardhura ${formatEuro(totalRevenue)}`,
+  ];
+  if (totalExpenses > 0 || totalRevenue > 0) {
+    parts.push(`Fitim ${formatEuro(totalRevenue - totalExpenses)}`);
+  }
+  return parts.join(" · ");
+}
+
 function StatusBadge({ status }: { status: CropSeason["status"] }) {
   const { badgeBg, textStrong } = entityTheme.seasons.color;
   return (
@@ -85,7 +110,7 @@ function CropSeasonsPageContent() {
   const matchesDesktop = useMediaQuery("(min-width: 768px)");
   const isDesktop = mounted && matchesDesktop;
 
-  const { data: parcels } = useParcels();
+  const { data: parcels, isLoading: parcelsLoading } = useParcels();
 
   const {
     data: seasons,
@@ -168,11 +193,15 @@ function CropSeasonsPageContent() {
             <SelectItem value={ALL_PARCELS_VALUE}>
               Të gjitha parcelat
             </SelectItem>
-            {parcels?.map((parcel) => (
-              <SelectItem key={parcel.id} value={parcel.id}>
-                {parcel.name} — {parcel.farmName}
-              </SelectItem>
-            ))}
+            {parcelsLoading ? (
+              <SelectLoadingItem />
+            ) : (
+              parcels?.map((parcel) => (
+                <SelectItem key={parcel.id} value={parcel.id}>
+                  {parcel.name} — {parcel.farmName}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
 
@@ -205,7 +234,7 @@ function CropSeasonsPageContent() {
 
       <div className="mt-6">
         {isLoading ? (
-          <LoadingState entityKey="seasons" />
+          <ListSkeleton columns={8} />
         ) : isError ? (
           <p className="text-sm text-danger">
             {error instanceof Error
@@ -249,6 +278,7 @@ function CropSeasonsPageContent() {
                   <TableHead>Statusi</TableHead>
                   <TableHead>Mbjellja</TableHead>
                   <TableHead>Korrja e pritur</TableHead>
+                  <TableHead>Financiare</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
@@ -285,6 +315,9 @@ function CropSeasonsPageContent() {
                     <TableCell className="text-text-secondary">
                       {formatDate(season.expectedHarvestDate)}
                     </TableCell>
+                    <TableCell className="text-sm text-text-secondary">
+                      {seasonFinancialMeta(season)}
+                    </TableCell>
                     <TableCell>
                       <CropSeasonRowActions
                         season={season}
@@ -306,6 +339,7 @@ function CropSeasonsPageContent() {
                 href={`/seasons/${season.id}`}
                 title={`${season.cropName} · ${season.season}`}
                 subtitle={`${season.parcelName} — ${season.farmName}`}
+                meta={seasonFinancialMeta(season)}
                 badge={seasonStatusLabels[season.status]}
                 right={
                   <CropSeasonRowActions

@@ -8,4 +8,9 @@ export type Farm = {
   location: string | null;
   createdAt: string;
   updatedAt: string;
+  // Row-summary rollups, present only on the list endpoint (GET /api/farms)
+  // — undefined elsewhere (create/update/detail responses).
+  parcelCount?: number;
+  totalAreaHa?: number;
+  activeSeasonCount?: number;
 };

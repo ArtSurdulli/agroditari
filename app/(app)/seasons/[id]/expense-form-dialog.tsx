@@ -14,13 +14,14 @@ import {
 } from "@/components/ui/select";
 import { LoadingButton } from "@/components/common/loading-button";
 import { EntityDialogHeader } from "@/components/common/entity-dialog-header";
+import { SelectLoadingItem } from "@/components/common/select-loading-item";
 import { useCreateExpense, useUpdateExpense } from "@/hooks/use-expenses";
 import { useCropSeasons } from "@/hooks/use-crop-seasons";
 import {
   expenseCategoryLabels,
   expenseCategoryValues,
 } from "@/lib/validations/expense";
-import { getEntityTheme } from "@/lib/entity-theme";
+import { entityAccentStyle, getEntityTheme } from "@/lib/entity-theme";
 import type { ExpenseInput } from "@/lib/validations/expense";
 import type { ApiError } from "@/lib/api/client";
 import type { Expense } from "@/types/expense";
@@ -81,7 +82,7 @@ export function ExpenseFormDialog({
     }
   }
 
-  const { data: seasons } = useCropSeasons();
+  const { data: seasons, isLoading: seasonsLoading } = useCropSeasons();
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
 
@@ -148,7 +149,7 @@ export function ExpenseFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent style={entityAccentStyle(theme)}>
         <EntityDialogHeader
           entityKey="expenses"
           title={isEditing ? "Ndrysho shpenzimin" : "Shto shpenzim"}
@@ -171,13 +172,17 @@ export function ExpenseFormDialog({
                 <SelectTrigger id="expense-season" className="w-full">
                   <SelectValue placeholder="Zgjidh sezonin" />
                 </SelectTrigger>
-                <SelectContent>
-                  {seasons?.map((season) => (
-                    <SelectItem key={season.id} value={season.id}>
-                      {season.cropName} — {season.parcelName} (
-                      {season.season})
-                    </SelectItem>
-                  ))}
+                <SelectContent entityKey="expenses">
+                  {seasonsLoading ? (
+                    <SelectLoadingItem />
+                  ) : (
+                    seasons?.map((season) => (
+                      <SelectItem key={season.id} value={season.id}>
+                        {season.cropName} — {season.parcelName} (
+                        {season.season})
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               {fieldErrors.cropSeasonId && (
@@ -201,7 +206,7 @@ export function ExpenseFormDialog({
               <SelectTrigger id="expense-category" className="w-full">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent entityKey="expenses">
                 {expenseCategoryValues.map((value) => (
                   <SelectItem key={value} value={value}>
                     {expenseCategoryLabels[value]}

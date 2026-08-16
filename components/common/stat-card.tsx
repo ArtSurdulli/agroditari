@@ -7,13 +7,19 @@ type DeltaTone = "up" | "down" | "neutral";
 
 type StatCardProps = {
   label: string;
-  value: string | number;
+  // Multiple entries (e.g. quantities grouped by unit, which are never
+  // summed across units) render as tidy stacked lines instead of one
+  // comma-joined string that wraps mid-word.
+  value: string | number | string[];
   delta?: string;
   deltaTone?: DeltaTone;
   icon?: LucideIcon;
   // When set, tints the icon tile and adds a left accent bar in the given
   // entity's color instead of the generic primary green.
   color?: EntityColor;
+  // Tighter padding and a smaller icon tile, for totals shown inline above a
+  // list (season tabs, entity list pages) rather than as dashboard KPIs.
+  compact?: boolean;
 };
 
 const toneStyles: Record<DeltaTone, string> = {
@@ -42,20 +48,54 @@ export function StatCard({
   deltaTone = "neutral",
   icon: Icon,
   color,
+  compact = false,
 }: StatCardProps) {
   const ToneIcon = toneIcons[deltaTone];
+  const values = Array.isArray(value) ? value : [formatValue(value)];
+  const stacked = values.length > 1;
 
   return (
     <Card
+      size={compact ? "sm" : "default"}
       className={cn(color && "border-l-4")}
       style={color ? { borderLeftColor: color.border } : undefined}
     >
-      <CardContent className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-text-secondary">{label}</p>
-          <p className="mt-1 text-2xl font-semibold text-text-primary">
-            {formatValue(value)}
+      <CardContent
+        className={cn("flex items-start justify-between", compact ? "gap-3" : "gap-4")}
+      >
+        <div className="min-w-0">
+          <p
+            className={cn(
+              "text-text-secondary",
+              compact ? "text-xs" : "text-sm"
+            )}
+          >
+            {label}
           </p>
+          {stacked ? (
+            <div className={cn("flex flex-col", compact ? "mt-0.5" : "mt-1")}>
+              {values.map((part, index) => (
+                <p
+                  key={index}
+                  className={cn(
+                    "truncate leading-tight font-semibold text-text-primary",
+                    compact ? "text-base" : "text-xl"
+                  )}
+                >
+                  {part}
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p
+              className={cn(
+                "truncate font-semibold text-text-primary",
+                compact ? "mt-0.5 text-lg" : "mt-1 text-2xl"
+              )}
+            >
+              {values[0]}
+            </p>
+          )}
           {delta && (
             <p
               className={cn(
@@ -70,11 +110,14 @@ export function StatCard({
         </div>
         {Icon && (
           <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-light"
+            className={cn(
+              "flex shrink-0 items-center justify-center rounded-lg bg-primary-light",
+              compact ? "h-8 w-8" : "h-10 w-10"
+            )}
             style={color ? { backgroundColor: color.tint } : undefined}
           >
             <Icon
-              className="h-5 w-5 text-primary"
+              className={compact ? "h-4 w-4 text-primary" : "h-5 w-5 text-primary"}
               style={color ? { color: color.solid } : undefined}
             />
           </div>

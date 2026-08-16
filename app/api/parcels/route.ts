@@ -32,11 +32,31 @@ export const GET = withApiHandler(async (request: NextRequest) => {
       ...(farmId ? { farmId } : {}),
       ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
     },
-    include: parcelInclude,
+    include: {
+      ...parcelInclude,
+      // Row-summary rollups for the list — a lightweight select, one query
+      // instead of N requests per row.
+      cropSeasons: {
+        orderBy: { createdAt: "desc" },
+        select: { status: true, crop: { select: { name: true } } },
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
 
-  return NextResponse.json(parcels.map(serializeParcel));
+  const parcelsWithStats = parcels.map(({ cropSeasons, ...parcel }) => {
+    const currentSeason =
+      cropSeasons.find((season) => season.status === "active") ?? cropSeasons[0];
+    return {
+      ...serializeParcel(parcel),
+      seasonCount: cropSeasons.length,
+      activeSeasonCount: cropSeasons.filter((season) => season.status === "active")
+        .length,
+      currentCropName: currentSeason?.crop.name ?? null,
+    };
+  });
+
+  return NextResponse.json(parcelsWithStats);
 });
 
 export const POST = withApiHandler(async (request: NextRequest) => {

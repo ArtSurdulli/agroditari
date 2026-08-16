@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { EntityCard } from "@/components/common/entity-card";
 import { EntityIconChip } from "@/components/common/entity-icon-chip";
 import { EntityTableRow } from "@/components/common/entity-table-row";
-import { LoadingState } from "@/components/common/loading-state";
+import { ListSkeleton } from "@/components/common/list-skeleton";
 import { ConfirmDeleteDialog } from "@/components/common/confirm-delete-dialog";
 import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { Button } from "@/components/ui/button";
@@ -206,7 +206,7 @@ function RemindersPageContent() {
 
       <div className="mt-6">
         {isLoading ? (
-          <LoadingState entityKey="reminders" />
+          <ListSkeleton columns={3} />
         ) : isError ? (
           <p className="text-sm text-danger">
             {error instanceof Error
