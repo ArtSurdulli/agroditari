@@ -19,6 +19,7 @@ import { useCreateHarvest, useUpdateHarvest } from "@/hooks/use-harvests";
 import { useCropSeasons } from "@/hooks/use-crop-seasons";
 import { unitTypeLabels, unitTypeValues } from "@/lib/validations/harvest";
 import { entityAccentStyle, getEntityTheme } from "@/lib/entity-theme";
+import { parseLocaleDecimal } from "@/lib/decimal";
 import type { HarvestInput } from "@/lib/validations/harvest";
 import type { ApiError } from "@/lib/api/client";
 import type { Harvest } from "@/types/harvest";
@@ -33,12 +34,6 @@ type HarvestFormDialogProps = {
   // season picker is shown. When omitted, the user picks from their seasons.
   lockedCropSeasonId?: string;
 };
-
-// Accepts Albanian-locale comma decimals ("0,12") as well as dots, same fix
-// as parcels' areaHa and expenses.
-function parseDecimal(value: string): number {
-  return Number(value.replace(",", "."));
-}
 
 function formatComputedRevenue(quantity: number, unitPrice: number): string {
   return (quantity * unitPrice).toFixed(2);
@@ -88,8 +83,8 @@ export function HarvestFormDialog({
   // stays editable afterwards, but recomputes on every quantity/price change.
   function recomputeRevenue(nextQuantity: string, nextUnitPrice: string) {
     if (nextQuantity.trim() === "" || nextUnitPrice.trim() === "") return;
-    const q = parseDecimal(nextQuantity);
-    const p = parseDecimal(nextUnitPrice);
+    const q = parseLocaleDecimal(nextQuantity);
+    const p = parseLocaleDecimal(nextUnitPrice);
     if (Number.isFinite(q) && Number.isFinite(p)) {
       setRevenue(formatComputedRevenue(q, p));
     }
@@ -112,11 +107,11 @@ export function HarvestFormDialog({
 
     const payload = {
       cropSeasonId: lockedCropSeasonId ?? cropSeasonId,
-      quantity: parseDecimal(quantity),
+      quantity: parseLocaleDecimal(quantity),
       unit: unit as HarvestInput["unit"],
       unitPrice:
-        unitPrice.trim() === "" ? undefined : parseDecimal(unitPrice),
-      revenue: revenue.trim() === "" ? undefined : parseDecimal(revenue),
+        unitPrice.trim() === "" ? undefined : parseLocaleDecimal(unitPrice),
+      revenue: revenue.trim() === "" ? undefined : parseLocaleDecimal(revenue),
       date,
     };
 
