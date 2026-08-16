@@ -22,6 +22,7 @@ import {
   expenseCategoryValues,
 } from "@/lib/validations/expense";
 import { entityAccentStyle, getEntityTheme } from "@/lib/entity-theme";
+import { parseLocaleDecimal } from "@/lib/decimal";
 import type { ExpenseInput } from "@/lib/validations/expense";
 import type { ApiError } from "@/lib/api/client";
 import type { Expense } from "@/types/expense";
@@ -36,12 +37,6 @@ type ExpenseFormDialogProps = {
   // season picker is shown. When omitted, the user picks from their seasons.
   lockedCropSeasonId?: string;
 };
-
-// Accepts Albanian-locale comma decimals ("0,12") as well as dots, same fix
-// as parcels' areaHa.
-function parseDecimal(value: string): number {
-  return Number(value.replace(",", "."));
-}
 
 function formatComputedAmount(quantity: number, unitPrice: number): string {
   return (quantity * unitPrice).toFixed(2);
@@ -93,8 +88,8 @@ export function ExpenseFormDialog({
   // stays editable afterwards, but recomputes on every quantity/price change.
   function recomputeAmount(nextQuantity: string, nextUnitPrice: string) {
     if (nextQuantity.trim() === "" || nextUnitPrice.trim() === "") return;
-    const q = parseDecimal(nextQuantity);
-    const p = parseDecimal(nextUnitPrice);
+    const q = parseLocaleDecimal(nextQuantity);
+    const p = parseLocaleDecimal(nextUnitPrice);
     if (Number.isFinite(q) && Number.isFinite(p)) {
       setAmount(formatComputedAmount(q, p));
     }
@@ -120,10 +115,10 @@ export function ExpenseFormDialog({
       category: category as ExpenseInput["category"],
       description,
       quantity:
-        quantity.trim() === "" ? undefined : parseDecimal(quantity),
+        quantity.trim() === "" ? undefined : parseLocaleDecimal(quantity),
       unitPrice:
-        unitPrice.trim() === "" ? undefined : parseDecimal(unitPrice),
-      amount: parseDecimal(amount),
+        unitPrice.trim() === "" ? undefined : parseLocaleDecimal(unitPrice),
+      amount: parseLocaleDecimal(amount),
       date,
     };
 

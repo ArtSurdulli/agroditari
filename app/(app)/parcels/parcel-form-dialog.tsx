@@ -18,6 +18,7 @@ import { SelectLoadingItem } from "@/components/common/select-loading-item";
 import { useCreateParcel, useUpdateParcel } from "@/hooks/use-parcels";
 import { useFarms } from "@/hooks/use-farms";
 import { entityAccentStyle, getEntityTheme } from "@/lib/entity-theme";
+import { parseLocaleDecimal } from "@/lib/decimal";
 import type { ApiError } from "@/lib/api/client";
 import type { Parcel } from "@/types/parcel";
 
@@ -28,12 +29,6 @@ type ParcelFormDialogProps = {
   onOpenChange: (open: boolean) => void;
   parcel: Parcel | null;
 };
-
-// Accepts Albanian-locale comma decimals ("0,12") as well as dots so typing
-// doesn't silently coerce to NaN before it ever reaches validation.
-function parseAreaHa(value: string): number {
-  return Number(value.replace(",", "."));
-}
 
 export function ParcelFormDialog({
   open,
@@ -81,14 +76,14 @@ export function ParcelFormDialog({
           id: parcel.id,
           farmId,
           name,
-          areaHa: parseAreaHa(areaHa),
+          areaHa: parseLocaleDecimal(areaHa),
           soilType,
         });
       } else {
         await createParcel.mutateAsync({
           farmId,
           name,
-          areaHa: parseAreaHa(areaHa),
+          areaHa: parseLocaleDecimal(areaHa),
           soilType,
         });
       }
