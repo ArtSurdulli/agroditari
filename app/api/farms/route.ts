@@ -20,10 +20,28 @@ export const GET = withApiHandler(async (request: NextRequest) => {
       userId: session.user.id,
       ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
     },
+    // Row-summary rollups for the list — lightweight selects, one query
+    // instead of N requests per row.
+    include: {
+      parcels: {
+        select: { areaHa: true, cropSeasons: { select: { status: true } } },
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
 
-  return NextResponse.json(farms);
+  const farmsWithStats = farms.map(({ parcels, ...farm }) => ({
+    ...farm,
+    parcelCount: parcels.length,
+    totalAreaHa: parcels.reduce((sum, parcel) => sum + Number(parcel.areaHa), 0),
+    activeSeasonCount: parcels.reduce(
+      (sum, parcel) =>
+        sum + parcel.cropSeasons.filter((season) => season.status === "active").length,
+      0
+    ),
+  }));
+
+  return NextResponse.json(farmsWithStats);
 });
 
 export const POST = withApiHandler(async (request: NextRequest) => {

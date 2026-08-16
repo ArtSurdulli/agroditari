@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { EntityCard } from "@/components/common/entity-card";
 import { EntityIconChip } from "@/components/common/entity-icon-chip";
 import { EntityTableRow } from "@/components/common/entity-table-row";
-import { LoadingState } from "@/components/common/loading-state";
+import { ListSkeleton } from "@/components/common/list-skeleton";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -100,7 +100,7 @@ export function SeasonActivities({ cropSeasonId }: { cropSeasonId: string }) {
 
       <div className="mt-4">
         {isLoading ? (
-          <LoadingState entityKey="activities" />
+          <ListSkeleton rows={3} columns={3} />
         ) : isError ? (
           <p className="text-sm text-danger">
             {error instanceof Error

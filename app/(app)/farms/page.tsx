@@ -1,13 +1,14 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { MoreVertical, Plus, Search } from "lucide-react";
 import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { EntityCard } from "@/components/common/entity-card";
 import { EntityIconChip } from "@/components/common/entity-icon-chip";
 import { EntityTableRow } from "@/components/common/entity-table-row";
-import { LoadingState } from "@/components/common/loading-state";
+import { ListSkeleton } from "@/components/common/list-skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +36,25 @@ import { DeleteFarmDialog } from "./delete-farm-dialog";
 import type { Farm } from "@/types/farm";
 
 const theme = getEntityTheme("farms");
+
+function formatArea(areaHa: number) {
+  return areaHa.toLocaleString("sq-AL", { maximumFractionDigits: 2 });
+}
+
+// Compact per-row summary, e.g. "3 parcela · 5.2 ha · 2 sezone aktive" —
+// reused for both the desktop column and the mobile card's meta line.
+function farmStatLine(farm: Farm) {
+  const parcelCount = farm.parcelCount ?? 0;
+  if (parcelCount === 0) {
+    return "Ende pa parcela";
+  }
+  const activeSeasonCount = farm.activeSeasonCount ?? 0;
+  return [
+    `${parcelCount} ${parcelCount === 1 ? "parcelë" : "parcela"}`,
+    `${formatArea(farm.totalAreaHa ?? 0)} ha`,
+    `${activeSeasonCount} ${activeSeasonCount === 1 ? "sezon aktiv" : "sezone aktive"}`,
+  ].join(" · ");
+}
 
 export default function FarmsPage() {
   return (
@@ -108,7 +128,7 @@ function FarmsPageContent() {
 
       <div className="mt-6">
         {isLoading ? (
-          <LoadingState entityKey="farms" />
+          <ListSkeleton columns={3} />
         ) : isError ? (
           <p className="text-sm text-danger">
             {error instanceof Error
@@ -147,6 +167,7 @@ function FarmsPageContent() {
                 <TableRow>
                   <TableHead>Emri</TableHead>
                   <TableHead>Vendndodhja</TableHead>
+                  <TableHead>Përmbledhje</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
@@ -156,11 +177,20 @@ function FarmsPageContent() {
                     <TableCell className="font-medium text-text-primary">
                       <div className="flex items-center gap-3">
                         <EntityIconChip entityKey="farms" />
-                        {farm.name}
+                        <Link
+                          href={`/farms/${farm.id}`}
+                          className="hover:underline"
+                          style={{ color: theme.color.solid }}
+                        >
+                          {farm.name}
+                        </Link>
                       </div>
                     </TableCell>
                     <TableCell className="text-text-secondary">
                       {farm.location || "—"}
+                    </TableCell>
+                    <TableCell className="text-sm text-text-secondary">
+                      {farmStatLine(farm)}
                     </TableCell>
                     <TableCell>
                       <FarmRowActions
@@ -180,8 +210,10 @@ function FarmsPageContent() {
               <EntityCard
                 key={farm.id}
                 entityKey="farms"
+                href={`/farms/${farm.id}`}
                 title={farm.name}
                 subtitle={farm.location}
+                meta={farmStatLine(farm)}
                 right={
                   <FarmRowActions
                     farm={farm}

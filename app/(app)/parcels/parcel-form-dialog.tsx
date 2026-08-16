@@ -14,9 +14,10 @@ import {
 } from "@/components/ui/select";
 import { LoadingButton } from "@/components/common/loading-button";
 import { EntityDialogHeader } from "@/components/common/entity-dialog-header";
+import { SelectLoadingItem } from "@/components/common/select-loading-item";
 import { useCreateParcel, useUpdateParcel } from "@/hooks/use-parcels";
 import { useFarms } from "@/hooks/use-farms";
-import { getEntityTheme } from "@/lib/entity-theme";
+import { entityAccentStyle, getEntityTheme } from "@/lib/entity-theme";
 import type { ApiError } from "@/lib/api/client";
 import type { Parcel } from "@/types/parcel";
 
@@ -62,7 +63,7 @@ export function ParcelFormDialog({
     }
   }
 
-  const { data: farms } = useFarms();
+  const { data: farms, isLoading: farmsLoading } = useFarms();
   const createParcel = useCreateParcel();
   const updateParcel = useUpdateParcel();
 
@@ -105,7 +106,7 @@ export function ParcelFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent style={entityAccentStyle(theme)}>
         <EntityDialogHeader
           entityKey="parcels"
           title={isEditing ? "Ndrysho parcelën" : "Shto parcelë"}
@@ -125,12 +126,16 @@ export function ParcelFormDialog({
               <SelectTrigger id="parcel-farm" className="w-full">
                 <SelectValue placeholder="Zgjidh fermën" />
               </SelectTrigger>
-              <SelectContent>
-                {farms?.map((farm) => (
-                  <SelectItem key={farm.id} value={farm.id}>
-                    {farm.name}
-                  </SelectItem>
-                ))}
+              <SelectContent entityKey="parcels">
+                {farmsLoading ? (
+                  <SelectLoadingItem />
+                ) : (
+                  farms?.map((farm) => (
+                    <SelectItem key={farm.id} value={farm.id}>
+                      {farm.name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
             {fieldErrors.farmId && (

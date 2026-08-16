@@ -12,10 +12,12 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { CardGridSkeleton } from "@/components/common/card-grid-skeleton";
+import { ChartSkeleton } from "@/components/common/chart-skeleton";
 import { EntityCard } from "@/components/common/entity-card";
 import { EntityIconChip } from "@/components/common/entity-icon-chip";
-import { LoadingState } from "@/components/common/loading-state";
 import { PageHeader } from "@/components/common/page-header";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/common/stat-card";
 import { buttonVariants } from "@/components/ui/button";
 import { useActivities } from "@/hooks/use-activities";
@@ -109,6 +111,8 @@ export default function DashboardPage() {
   const { data: activities, isLoading: activitiesLoading } = useActivities();
   const { data: expenses, isLoading: expensesLoading } = useExpenses();
   const { data: harvests, isLoading: harvestsLoading } = useHarvests();
+
+  const kpiLoading = parcelsLoading || activeSeasonsLoading || reportLoading;
 
   const summary = report?.summary;
   const rows = report?.rows ?? [];
@@ -205,48 +209,44 @@ export default function DashboardPage() {
         </Link>
       )}
 
-      <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Link href="/parcels" className="block rounded-xl transition-shadow hover:shadow-md">
-          <StatCard
-            label="Parcela"
-            value={parcelsLoading ? "…" : (parcels?.length ?? 0)}
-            icon={ParcelsIcon}
-            color={entityTheme.parcels.color}
-          />
-        </Link>
-        <Link href="/seasons" className="block rounded-xl transition-shadow hover:shadow-md">
-          <StatCard
-            label="Sezone aktive"
-            value={activeSeasonsLoading ? "…" : (activeSeasons?.length ?? 0)}
-            icon={SeasonsIcon}
-            color={entityTheme.seasons.color}
-          />
-        </Link>
-        <Link href="/expenses" className="block rounded-xl transition-shadow hover:shadow-md">
-          <StatCard
-            label="Shpenzime"
-            value={
-              reportLoading ? "…" : summary ? formatEuro(summary.totalCost) : "0,00 €"
-            }
-            icon={ExpensesIcon}
-            color={entityTheme.expenses.color}
-          />
-        </Link>
-        <Link href="/reports" className="block rounded-xl transition-shadow hover:shadow-md">
-          <StatCard
-            label="Të ardhura"
-            value={
-              reportLoading
-                ? "…"
-                : summary
-                  ? formatEuro(summary.totalRevenue)
-                  : "0,00 €"
-            }
-            icon={HarvestsIcon}
-            color={entityTheme.harvests.color}
-          />
-        </Link>
-      </div>
+      {kpiLoading ? (
+        <CardGridSkeleton count={4} className="mt-6 grid-cols-2 lg:grid-cols-4" />
+      ) : (
+        <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <Link href="/parcels" className="block rounded-xl transition-shadow hover:shadow-md">
+            <StatCard
+              label="Parcela"
+              value={parcels?.length ?? 0}
+              icon={ParcelsIcon}
+              color={entityTheme.parcels.color}
+            />
+          </Link>
+          <Link href="/seasons" className="block rounded-xl transition-shadow hover:shadow-md">
+            <StatCard
+              label="Sezone aktive"
+              value={activeSeasons?.length ?? 0}
+              icon={SeasonsIcon}
+              color={entityTheme.seasons.color}
+            />
+          </Link>
+          <Link href="/expenses" className="block rounded-xl transition-shadow hover:shadow-md">
+            <StatCard
+              label="Shpenzime"
+              value={summary ? formatEuro(summary.totalCost) : "0,00 €"}
+              icon={ExpensesIcon}
+              color={entityTheme.expenses.color}
+            />
+          </Link>
+          <Link href="/reports" className="block rounded-xl transition-shadow hover:shadow-md">
+            <StatCard
+              label="Të ardhura"
+              value={summary ? formatEuro(summary.totalRevenue) : "0,00 €"}
+              icon={HarvestsIcon}
+              color={entityTheme.harvests.color}
+            />
+          </Link>
+        </div>
+      )}
 
       <div className="mt-8">
         <div className="flex items-center justify-between">
@@ -263,9 +263,7 @@ export default function DashboardPage() {
           )}
         </div>
         {reportLoading ? (
-          <div className="mt-3 rounded-2xl border border-border bg-surface">
-            <LoadingState entityKey="dashboard" />
-          </div>
+          <ChartSkeleton className="mt-3 h-64" />
         ) : hasReportData ? (
           <div className="mt-3 h-64 rounded-2xl border border-border bg-surface p-4">
             <ResponsiveContainer width="100%" height="100%">
@@ -351,7 +349,20 @@ export default function DashboardPage() {
           </div>
           <div className="mt-3">
             {remindersLoading ? (
-              <LoadingState entityKey="reminders" />
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 py-3"
+                  >
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <Skeleton className="h-4 w-2/3" />
+                      <Skeleton className="h-3 w-1/4" />
+                    </div>
+                    <Skeleton className="h-5 w-14 shrink-0 rounded-full" />
+                  </div>
+                ))}
+              </div>
             ) : upcomingReminders.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border px-6 py-6 text-center">
                 <div
@@ -412,7 +423,20 @@ export default function DashboardPage() {
           </div>
           <div className="mt-3">
             {activeSeasonsLoading ? (
-              <LoadingState entityKey="seasons" />
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3 rounded-[14px] border-[1.5px] border-border p-4"
+                  >
+                    <Skeleton className="h-11 w-11 shrink-0 rounded-xl" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <Skeleton className="h-4 w-2/3" />
+                      <Skeleton className="h-3 w-1/3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : activeSeasonsList.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border px-6 py-6 text-center">
                 <div
@@ -455,7 +479,18 @@ export default function DashboardPage() {
         </h2>
         <div className="mt-3">
           {feedLoading ? (
-            <LoadingState entityKey="dashboard" />
+            <div className="space-y-2">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3"
+                >
+                  <Skeleton className="h-8 w-8 shrink-0 rounded-lg" />
+                  <Skeleton className="h-4 flex-1" />
+                  <Skeleton className="h-3 w-12 shrink-0" />
+                </div>
+              ))}
+            </div>
           ) : feed.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border px-6 py-6 text-center">
               <div

@@ -18,11 +18,16 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { CardGridSkeleton } from "@/components/common/card-grid-skeleton";
+import { ChartSkeleton } from "@/components/common/chart-skeleton";
 import { EmptyState } from "@/components/common/empty-state";
+import { ListSkeleton } from "@/components/common/list-skeleton";
 import { PageHeader } from "@/components/common/page-header";
+import { SelectLoadingItem } from "@/components/common/select-loading-item";
 import { StatCard } from "@/components/common/stat-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -117,8 +122,8 @@ export default function ReportsPage() {
   const matchesDesktop = useMediaQuery("(min-width: 768px)");
   const isDesktop = mounted && matchesDesktop;
 
-  const { data: seasons } = useCropSeasons();
-  const { data: parcels } = useParcels();
+  const { data: seasons, isLoading: seasonsLoading } = useCropSeasons();
+  const { data: parcels, isLoading: parcelsLoading } = useParcels();
 
   const {
     data: report,
@@ -177,11 +182,15 @@ export default function ReportsPage() {
             <SelectItem value={ALL_SEASONS_VALUE}>
               Të gjitha sezonet
             </SelectItem>
-            {seasons?.map((season) => (
-              <SelectItem key={season.id} value={season.id}>
-                {season.cropName} · {season.season}
-              </SelectItem>
-            ))}
+            {seasonsLoading ? (
+              <SelectLoadingItem />
+            ) : (
+              seasons?.map((season) => (
+                <SelectItem key={season.id} value={season.id}>
+                  {season.cropName} · {season.season}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
 
@@ -203,11 +212,15 @@ export default function ReportsPage() {
             <SelectItem value={ALL_PARCELS_VALUE}>
               Të gjitha parcelat
             </SelectItem>
-            {parcels?.map((parcel) => (
-              <SelectItem key={parcel.id} value={parcel.id}>
-                {parcel.name} — {parcel.farmName}
-              </SelectItem>
-            ))}
+            {parcelsLoading ? (
+              <SelectLoadingItem />
+            ) : (
+              parcels?.map((parcel) => (
+                <SelectItem key={parcel.id} value={parcel.id}>
+                  {parcel.name} — {parcel.farmName}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
 
@@ -231,7 +244,19 @@ export default function ReportsPage() {
       </div>
 
       {isLoading ? (
-        <p className="mt-6 text-sm text-text-secondary">Duke ngarkuar...</p>
+        <>
+          <CardGridSkeleton count={4} className="mt-6" />
+          <div className="mt-8">
+            <Skeleton className="h-[18px] w-56" />
+            <ChartSkeleton className="mt-3 h-72" />
+          </div>
+          <div className="mt-8">
+            <Skeleton className="h-[18px] w-40" />
+            <div className="mt-3">
+              <ListSkeleton rows={5} columns={8} />
+            </div>
+          </div>
+        </>
       ) : isError ? (
         <p className="mt-6 text-sm text-danger">
           {error instanceof Error

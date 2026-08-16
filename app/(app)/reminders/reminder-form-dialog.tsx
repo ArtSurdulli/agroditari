@@ -15,9 +15,10 @@ import {
 } from "@/components/ui/select";
 import { LoadingButton } from "@/components/common/loading-button";
 import { EntityDialogHeader } from "@/components/common/entity-dialog-header";
+import { SelectLoadingItem } from "@/components/common/select-loading-item";
 import { useCreateReminder, useUpdateReminder } from "@/hooks/use-reminders";
 import { useCropSeasons } from "@/hooks/use-crop-seasons";
-import { getEntityTheme } from "@/lib/entity-theme";
+import { entityAccentStyle, getEntityTheme } from "@/lib/entity-theme";
 import type { ReminderInput } from "@/lib/validations/reminder";
 import type { ApiError } from "@/lib/api/client";
 import type { Reminder } from "@/types/reminder";
@@ -61,7 +62,7 @@ export function ReminderFormDialog({
     }
   }
 
-  const { data: seasons } = useCropSeasons();
+  const { data: seasons, isLoading: seasonsLoading } = useCropSeasons();
   const createReminder = useCreateReminder();
   const updateReminder = useUpdateReminder();
 
@@ -103,7 +104,7 @@ export function ReminderFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent style={entityAccentStyle(theme)}>
         <EntityDialogHeader
           entityKey="reminders"
           title={isEditing ? "Ndrysho kujtesën" : "Shto kujtesë"}
@@ -170,13 +171,17 @@ export function ReminderFormDialog({
               <SelectTrigger id="reminder-season" className="w-full">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent entityKey="reminders">
                 <SelectItem value={NONE_SEASON_VALUE}>Asnjë</SelectItem>
-                {seasons?.map((season) => (
-                  <SelectItem key={season.id} value={season.id}>
-                    {season.cropName} — {season.parcelName} ({season.season})
-                  </SelectItem>
-                ))}
+                {seasonsLoading ? (
+                  <SelectLoadingItem />
+                ) : (
+                  seasons?.map((season) => (
+                    <SelectItem key={season.id} value={season.id}>
+                      {season.cropName} — {season.parcelName} ({season.season})
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
             {fieldErrors.cropSeasonId && (

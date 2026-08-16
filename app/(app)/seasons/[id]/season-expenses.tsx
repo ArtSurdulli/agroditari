@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { MoreVertical, Plus, Receipt } from "lucide-react";
+import { MoreVertical, Plus } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { EntityCard } from "@/components/common/entity-card";
 import { EntityIconChip } from "@/components/common/entity-icon-chip";
 import { EntityTableRow } from "@/components/common/entity-table-row";
-import { LoadingState } from "@/components/common/loading-state";
+import { ListSkeleton } from "@/components/common/list-skeleton";
 import { StatCard } from "@/components/common/stat-card";
 import { Button } from "@/components/ui/button";
 import {
@@ -112,14 +112,16 @@ export function SeasonExpenses({ cropSeasonId }: { cropSeasonId: string }) {
           <StatCard
             label="Gjithsej shpenzime"
             value={formatEuro(total)}
-            icon={Receipt}
+            icon={entityTheme.expenses.icon}
+            color={entityTheme.expenses.color}
+            compact
           />
         </div>
       )}
 
       <div className="mt-4">
         {isLoading ? (
-          <LoadingState entityKey="expenses" />
+          <ListSkeleton rows={3} columns={4} />
         ) : isError ? (
           <p className="text-sm text-danger">
             {error instanceof Error
