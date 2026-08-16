@@ -2,13 +2,14 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
-import { Plus, ShoppingBasket } from "lucide-react";
+import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { EntityCard } from "@/components/common/entity-card";
 import { EntityIconChip } from "@/components/common/entity-icon-chip";
 import { EntityTableRow } from "@/components/common/entity-table-row";
-import { LoadingState } from "@/components/common/loading-state";
+import { ListSkeleton } from "@/components/common/list-skeleton";
+import { SelectLoadingItem } from "@/components/common/select-loading-item";
 import { StatCard } from "@/components/common/stat-card";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -74,7 +75,7 @@ function HarvestsPageContent() {
   const matchesDesktop = useMediaQuery("(min-width: 768px)");
   const isDesktop = mounted && matchesDesktop;
 
-  const { data: seasons } = useCropSeasons();
+  const { data: seasons, isLoading: seasonsLoading } = useCropSeasons();
 
   const {
     data: harvests,
@@ -97,12 +98,10 @@ function HarvestsPageContent() {
     },
     {}
   );
-  const totalQuantityLabel = Object.entries(quantityByUnit)
-    .map(
-      ([unit, qty]) =>
-        `${formatQuantity(qty)} ${unitTypeLabels[unit as keyof typeof unitTypeLabels]}`
-    )
-    .join(", ");
+  const totalQuantityParts = Object.entries(quantityByUnit).map(
+    ([unit, qty]) =>
+      `${formatQuantity(qty)} ${unitTypeLabels[unit as keyof typeof unitTypeLabels]}`
+  );
   const totalRevenue = (harvests ?? []).reduce(
     (sum, harvest) => sum + Number(harvest.revenue ?? 0),
     0
@@ -142,11 +141,15 @@ function HarvestsPageContent() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL_SEASONS_VALUE}>Të gjitha sezonet</SelectItem>
-            {seasons?.map((season) => (
-              <SelectItem key={season.id} value={season.id}>
-                {season.cropName} — {season.parcelName} ({season.season})
-              </SelectItem>
-            ))}
+            {seasonsLoading ? (
+              <SelectLoadingItem />
+            ) : (
+              seasons?.map((season) => (
+                <SelectItem key={season.id} value={season.id}>
+                  {season.cropName} — {season.parcelName} ({season.season})
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
       </div>
@@ -155,20 +158,24 @@ function HarvestsPageContent() {
         <div className="mt-4 grid grid-cols-1 gap-3 sm:max-w-md sm:grid-cols-2">
           <StatCard
             label="Sasia gjithsej"
-            value={totalQuantityLabel || "—"}
-            icon={ShoppingBasket}
+            value={totalQuantityParts.length > 0 ? totalQuantityParts : "—"}
+            icon={theme.icon}
+            color={theme.color}
+            compact
           />
           <StatCard
             label="Të ardhurat gjithsej"
             value={formatEuro(totalRevenue)}
-            icon={ShoppingBasket}
+            icon={theme.icon}
+            color={theme.color}
+            compact
           />
         </div>
       )}
 
       <div className="mt-6">
         {isLoading ? (
-          <LoadingState entityKey="harvests" />
+          <ListSkeleton columns={4} />
         ) : isError ? (
           <p className="text-sm text-danger">
             {error instanceof Error

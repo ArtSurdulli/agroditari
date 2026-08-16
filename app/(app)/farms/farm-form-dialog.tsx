@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { LoadingButton } from "@/components/common/loading-button";
 import { EntityDialogHeader } from "@/components/common/entity-dialog-header";
 import { useCreateFarm, useUpdateFarm } from "@/hooks/use-farms";
-import { getEntityTheme } from "@/lib/entity-theme";
+import { entityAccentStyle, getEntityTheme } from "@/lib/entity-theme";
 import type { Farm } from "@/types/farm";
 
 const theme = getEntityTheme("farms");
@@ -66,7 +66,7 @@ export function FarmFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent style={entityAccentStyle(theme)}>
         <EntityDialogHeader
           entityKey="farms"
           title={isEditing ? "Ndrysho fermën" : "Shto fermë"}

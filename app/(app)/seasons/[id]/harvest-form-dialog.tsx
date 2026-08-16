@@ -14,10 +14,11 @@ import {
 } from "@/components/ui/select";
 import { LoadingButton } from "@/components/common/loading-button";
 import { EntityDialogHeader } from "@/components/common/entity-dialog-header";
+import { SelectLoadingItem } from "@/components/common/select-loading-item";
 import { useCreateHarvest, useUpdateHarvest } from "@/hooks/use-harvests";
 import { useCropSeasons } from "@/hooks/use-crop-seasons";
 import { unitTypeLabels, unitTypeValues } from "@/lib/validations/harvest";
-import { getEntityTheme } from "@/lib/entity-theme";
+import { entityAccentStyle, getEntityTheme } from "@/lib/entity-theme";
 import type { HarvestInput } from "@/lib/validations/harvest";
 import type { ApiError } from "@/lib/api/client";
 import type { Harvest } from "@/types/harvest";
@@ -76,7 +77,7 @@ export function HarvestFormDialog({
     }
   }
 
-  const { data: seasons } = useCropSeasons();
+  const { data: seasons, isLoading: seasonsLoading } = useCropSeasons();
   const createHarvest = useCreateHarvest();
   const updateHarvest = useUpdateHarvest();
 
@@ -139,7 +140,7 @@ export function HarvestFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent style={entityAccentStyle(theme)}>
         <EntityDialogHeader
           entityKey="harvests"
           title={isEditing ? "Ndrysho korrjen" : "Shto korrje"}
@@ -162,13 +163,17 @@ export function HarvestFormDialog({
                 <SelectTrigger id="harvest-season" className="w-full">
                   <SelectValue placeholder="Zgjidh sezonin" />
                 </SelectTrigger>
-                <SelectContent>
-                  {seasons?.map((season) => (
-                    <SelectItem key={season.id} value={season.id}>
-                      {season.cropName} — {season.parcelName} (
-                      {season.season})
-                    </SelectItem>
-                  ))}
+                <SelectContent entityKey="harvests">
+                  {seasonsLoading ? (
+                    <SelectLoadingItem />
+                  ) : (
+                    seasons?.map((season) => (
+                      <SelectItem key={season.id} value={season.id}>
+                        {season.cropName} — {season.parcelName} (
+                        {season.season})
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               {fieldErrors.cropSeasonId && (
@@ -208,7 +213,7 @@ export function HarvestFormDialog({
                 <SelectTrigger id="harvest-unit" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent entityKey="harvests">
                   {unitTypeValues.map((value) => (
                     <SelectItem key={value} value={value}>
                       {unitTypeLabels[value]}

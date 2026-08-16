@@ -1,13 +1,15 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { MoreVertical, Plus, Search } from "lucide-react";
 import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { EntityCard } from "@/components/common/entity-card";
 import { EntityIconChip } from "@/components/common/entity-icon-chip";
 import { EntityTableRow } from "@/components/common/entity-table-row";
-import { LoadingState } from "@/components/common/loading-state";
+import { ListSkeleton } from "@/components/common/list-skeleton";
+import { SelectLoadingItem } from "@/components/common/select-loading-item";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +53,23 @@ function formatArea(areaHa: string) {
   return Number.isFinite(value) ? value.toLocaleString("sq-AL") : areaHa;
 }
 
+// Compact per-row summary, e.g. "2 sezone · Domate" — reused for both the
+// desktop column and the mobile card's meta line.
+function parcelStatLine(parcel: Parcel) {
+  const seasonCount = parcel.seasonCount ?? 0;
+  if (seasonCount === 0) {
+    return "Ende pa sezone";
+  }
+  const activeSeasonCount = parcel.activeSeasonCount ?? 0;
+  const seasonsPart =
+    activeSeasonCount > 0
+      ? `${seasonCount} ${seasonCount === 1 ? "sezon" : "sezone"} (${activeSeasonCount} aktiv${activeSeasonCount === 1 ? "" : "ë"})`
+      : `${seasonCount} ${seasonCount === 1 ? "sezon" : "sezone"}`;
+  return parcel.currentCropName
+    ? `${seasonsPart} · ${parcel.currentCropName}`
+    : seasonsPart;
+}
+
 export default function ParcelsPage() {
   return (
     <Suspense>
@@ -71,7 +90,7 @@ function ParcelsPageContent() {
   const matchesDesktop = useMediaQuery("(min-width: 768px)");
   const isDesktop = mounted && matchesDesktop;
 
-  const { data: farms } = useFarms();
+  const { data: farms, isLoading: farmsLoading } = useFarms();
 
   const {
     data: parcels,
@@ -144,18 +163,22 @@ function ParcelsPageContent() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL_FARMS_VALUE}>Të gjitha fermat</SelectItem>
-            {farms?.map((farm) => (
-              <SelectItem key={farm.id} value={farm.id}>
-                {farm.name}
-              </SelectItem>
-            ))}
+            {farmsLoading ? (
+              <SelectLoadingItem />
+            ) : (
+              farms?.map((farm) => (
+                <SelectItem key={farm.id} value={farm.id}>
+                  {farm.name}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
       </div>
 
       <div className="mt-6">
         {isLoading ? (
-          <LoadingState entityKey="parcels" />
+          <ListSkeleton columns={5} />
         ) : isError ? (
           <p className="text-sm text-danger">
             {error instanceof Error
@@ -196,6 +219,7 @@ function ParcelsPageContent() {
                   <TableHead>Ferma</TableHead>
                   <TableHead>Sipërfaqja (ha)</TableHead>
                   <TableHead>Lloji i tokës</TableHead>
+                  <TableHead>Sezone</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
@@ -205,7 +229,13 @@ function ParcelsPageContent() {
                     <TableCell className="font-medium text-text-primary">
                       <div className="flex items-center gap-3">
                         <EntityIconChip entityKey="parcels" />
-                        {parcel.name}
+                        <Link
+                          href={`/parcels/${parcel.id}`}
+                          className="hover:underline"
+                          style={{ color: theme.color.solid }}
+                        >
+                          {parcel.name}
+                        </Link>
                       </div>
                     </TableCell>
                     <TableCell className="text-text-secondary">
@@ -216,6 +246,9 @@ function ParcelsPageContent() {
                     </TableCell>
                     <TableCell className="text-text-secondary">
                       {parcel.soilType || "—"}
+                    </TableCell>
+                    <TableCell className="text-sm text-text-secondary">
+                      {parcelStatLine(parcel)}
                     </TableCell>
                     <TableCell>
                       <ParcelRowActions
@@ -235,8 +268,10 @@ function ParcelsPageContent() {
               <EntityCard
                 key={parcel.id}
                 entityKey="parcels"
+                href={`/parcels/${parcel.id}`}
                 title={parcel.name}
                 subtitle={`${parcel.farmName} · ${formatArea(parcel.areaHa)} ha`}
+                meta={parcelStatLine(parcel)}
                 right={
                   <ParcelRowActions
                     parcel={parcel}

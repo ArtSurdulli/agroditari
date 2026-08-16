@@ -16,4 +16,8 @@ export type CropSeason = {
   expectedHarvestDate: string | null;
   createdAt: string;
   updatedAt: string;
+  // Row-summary rollups, present only on the list endpoint
+  // (GET /api/crop-seasons) — undefined elsewhere (create/update responses).
+  totalExpenses?: number;
+  totalRevenue?: number;
 };

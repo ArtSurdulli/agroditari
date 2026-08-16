@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/common/loading-button";
+import { SelectLoadingItem } from "@/components/common/select-loading-item";
 import { EntityDialogHeader } from "@/components/common/entity-dialog-header";
 import {
   useCreateCropSeason,
@@ -28,7 +29,7 @@ import {
   seasonStatusLabels,
   seasonStatusValues,
 } from "@/lib/validations/crop-season";
-import { getEntityTheme } from "@/lib/entity-theme";
+import { entityAccentStyle, getEntityTheme } from "@/lib/entity-theme";
 import type { CropSeasonInput } from "@/lib/validations/crop-season";
 import type { ApiError } from "@/lib/api/client";
 import type { CropSeason } from "@/types/crop-season";
@@ -84,8 +85,8 @@ export function CropSeasonFormDialog({
     }
   }
 
-  const { data: parcels } = useParcels();
-  const { data: crops } = useCrops();
+  const { data: parcels, isLoading: parcelsLoading } = useParcels();
+  const { data: crops, isLoading: cropsLoading } = useCrops();
   const createSeason = useCreateCropSeason();
   const updateSeason = useUpdateCropSeason();
   const createCrop = useCreateCrop();
@@ -145,7 +146,7 @@ export function CropSeasonFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent style={entityAccentStyle(theme)}>
         <EntityDialogHeader
           entityKey="seasons"
           title={isEditing ? "Ndrysho sezonin" : "Shto sezon"}
@@ -167,12 +168,16 @@ export function CropSeasonFormDialog({
               <SelectTrigger id="season-parcel" className="w-full">
                 <SelectValue placeholder="Zgjidh parcelën" />
               </SelectTrigger>
-              <SelectContent>
-                {parcels?.map((parcel) => (
-                  <SelectItem key={parcel.id} value={parcel.id}>
-                    {parcel.name} — {parcel.farmName}
-                  </SelectItem>
-                ))}
+              <SelectContent entityKey="seasons">
+                {parcelsLoading ? (
+                  <SelectLoadingItem />
+                ) : (
+                  parcels?.map((parcel) => (
+                    <SelectItem key={parcel.id} value={parcel.id}>
+                      {parcel.name} — {parcel.farmName}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
             {fieldErrors.parcelId && (
@@ -193,7 +198,8 @@ export function CropSeasonFormDialog({
               <SelectTrigger id="season-crop" className="w-full">
                 <SelectValue placeholder="Zgjidh kulturën" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent entityKey="seasons">
+                {cropsLoading && <SelectLoadingItem />}
                 {defaultCrops.length > 0 && (
                   <SelectGroup>
                     <SelectLabel>Kulturat e AgroDitari-t</SelectLabel>
@@ -224,7 +230,8 @@ export function CropSeasonFormDialog({
               <button
                 type="button"
                 onClick={() => setAddingCrop(true)}
-                className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                className="flex items-center gap-1 text-sm font-medium hover:underline"
+                style={{ color: theme.color.solid }}
               >
                 <Plus className="h-3.5 w-3.5" />
                 Shto kulturë të re
@@ -247,6 +254,8 @@ export function CropSeasonFormDialog({
                   size="sm"
                   loading={createCrop.isPending}
                   onClick={handleAddCrop}
+                  className="hover:opacity-90"
+                  style={{ backgroundColor: theme.color.solid }}
                 >
                   Shto
                 </LoadingButton>
@@ -294,7 +303,7 @@ export function CropSeasonFormDialog({
               <SelectTrigger id="season-status" className="w-full">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent entityKey="seasons">
                 {seasonStatusValues.map((value) => (
                   <SelectItem key={value} value={value}>
                     {seasonStatusLabels[value]}

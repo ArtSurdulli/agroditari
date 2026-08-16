@@ -37,7 +37,10 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
+  /* --entity-accent defaults to --ring at :root/.dark; entity dialogs
+     override it inline via lib/entity-theme.ts's entityAccentStyle() so
+     their inputs/selects focus in the entity color instead of green. */
+  --color-ring: var(--entity-accent);
   --color-input: var(--input);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
@@ -85,6 +88,13 @@ body {
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: #15803d;
+  /* Entity dialogs override this inline (see lib/entity-theme.ts's
+     entityAccentStyle()) with a real color, never a fallback chain — so
+     descendants always inherit a concrete, valid value, whether that's this
+     default green or an entity's color. Used for Input/Textarea/SelectTrigger
+     focus rings only — the Select dropdown's highlight is themed separately
+     below via [data-entity], since it portals past this variable's reach. */
+  --entity-accent: var(--ring);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -120,6 +130,7 @@ body {
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: #15803d;
+  --entity-accent: var(--ring);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -145,4 +156,49 @@ body {
   html {
     @apply font-sans;
   }
+}
+
+/* Entity-themed Select dropdown highlight. SelectContent portals to <body>,
+   so a CSS variable set on the dialog never reaches it reliably (confirmed
+   across multiple attempts) — components/ui/select.tsx instead stamps
+   data-entity="<key>" directly on the portaled popup (from each dialog's
+   <SelectContent entityKey="...">), and these plain selectors key off it.
+   Colors are each entity's tint/textStrong from lib/entity-theme.ts, kept in
+   sync manually. Selects with no entityKey (list-page filters, auth) get no
+   data-entity attribute, so they fall through to SelectItem's own default
+   (green) focus:bg-accent/focus:text-accent-foreground classes untouched. */
+[data-entity="farms"] [data-slot="select-item"]:focus,
+[data-entity="farms"] [data-slot="select-item"][data-highlighted] {
+  background-color: #eaf3de;
+  color: #173404;
+}
+[data-entity="parcels"] [data-slot="select-item"]:focus,
+[data-entity="parcels"] [data-slot="select-item"][data-highlighted] {
+  background-color: #e1f5ee;
+  color: #04342c;
+}
+[data-entity="seasons"] [data-slot="select-item"]:focus,
+[data-entity="seasons"] [data-slot="select-item"][data-highlighted] {
+  background-color: #faeeda;
+  color: #412402;
+}
+[data-entity="activities"] [data-slot="select-item"]:focus,
+[data-entity="activities"] [data-slot="select-item"][data-highlighted] {
+  background-color: #eeedfe;
+  color: #26215c;
+}
+[data-entity="expenses"] [data-slot="select-item"]:focus,
+[data-entity="expenses"] [data-slot="select-item"][data-highlighted] {
+  background-color: #faece7;
+  color: #4a1b0c;
+}
+[data-entity="harvests"] [data-slot="select-item"]:focus,
+[data-entity="harvests"] [data-slot="select-item"][data-highlighted] {
+  background-color: #e6f1fb;
+  color: #042c53;
+}
+[data-entity="reminders"] [data-slot="select-item"]:focus,
+[data-entity="reminders"] [data-slot="select-item"][data-highlighted] {
+  background-color: #fbeaf0;
+  color: #4b1528;
 }
