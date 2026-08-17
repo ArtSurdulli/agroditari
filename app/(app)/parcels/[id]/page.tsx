@@ -8,6 +8,7 @@ import { EntityIconChip } from "@/components/common/entity-icon-chip";
 import { StatCard } from "@/components/common/stat-card";
 import { entityTheme } from "@/lib/entity-theme";
 import { seasonStatusLabels } from "@/lib/validations/crop-season";
+import { hectareToAri } from "@/lib/units";
 import { ParcelDetailActions } from "./parcel-detail-actions";
 import type { Parcel } from "@/types/parcel";
 
@@ -17,8 +18,14 @@ type ParcelDetailPageProps = {
 
 const SeasonsIcon = entityTheme.seasons.icon;
 
+// areaHa is the canonical, stored figure — ari is shown alongside it only for
+// readability, e.g. "0.5 ha (50 ari)".
 function formatArea(areaHa: number) {
-  return areaHa.toLocaleString("sq-AL", { maximumFractionDigits: 2 });
+  const ha = areaHa.toLocaleString("sq-AL", { maximumFractionDigits: 2 });
+  const ari = hectareToAri(areaHa).toLocaleString("sq-AL", {
+    maximumFractionDigits: 2,
+  });
+  return `${ha} ha (${ari} ari)`;
 }
 
 function formatDate(value: Date) {
@@ -106,7 +113,7 @@ export default async function ParcelDetailPage({
               {parcel.name}
             </h1>
             <p className="mt-1 text-sm text-text-secondary">
-              {parcel.farm.name} · {formatArea(Number(parcel.areaHa))} ha
+              {parcel.farm.name} · {formatArea(Number(parcel.areaHa))}
               {parcel.soilType ? ` · ${parcel.soilType}` : ""}
             </p>
           </div>
