@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   BarChart3,
   Download,
+  FileText,
   Receipt,
   TrendingUp,
   Wallet,
@@ -22,6 +24,7 @@ import { CardGridSkeleton } from "@/components/common/card-grid-skeleton";
 import { ChartSkeleton } from "@/components/common/chart-skeleton";
 import { EmptyState } from "@/components/common/empty-state";
 import { ListSkeleton } from "@/components/common/list-skeleton";
+import { LoadingButton } from "@/components/common/loading-button";
 import { PageHeader } from "@/components/common/page-header";
 import { SelectLoadingItem } from "@/components/common/select-loading-item";
 import { StatCard } from "@/components/common/stat-card";
@@ -48,6 +51,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMounted } from "@/hooks/use-mounted";
 import { useParcels } from "@/hooks/use-parcels";
 import { useReports } from "@/hooks/use-reports";
+import { apiClient } from "@/lib/api/client";
 import { formatEuro, formatPercent, formatQuantity } from "@/lib/format";
 import type { ReportSeasonRow } from "@/types/report";
 
@@ -109,11 +113,48 @@ function exportCsv(rows: ReportSeasonRow[]) {
   URL.revokeObjectURL(url);
 }
 
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+// The PDF mirrors the same filtered data as the CSV export, but it's built
+// server-side (pdfkit), so this hits /api/reports/pdf with the same filters
+// instead of serializing the rows already in memory.
+async function exportPdf(filters: {
+  seasonId?: string;
+  parcelId?: string;
+  from?: string;
+  to?: string;
+}) {
+  try {
+    const response = await apiClient.get<Blob>("/reports/pdf", {
+      params: filters,
+      responseType: "blob",
+    });
+    const disposition = response.headers["content-disposition"] as
+      | string
+      | undefined;
+    const filename =
+      disposition?.match(/filename="([^"]+)"/)?.[1] ?? "agroditari-raport.pdf";
+    downloadBlob(response.data, filename);
+  } catch {
+    toast.error("Ndodhi një gabim. Provo përsëri.");
+  }
+}
+
 export default function ReportsPage() {
   const [seasonFilter, setSeasonFilter] = useState(ALL_SEASONS_VALUE);
   const [parcelFilter, setParcelFilter] = useState(ALL_PARCELS_VALUE);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   // Guard against a hydration mismatch: the server always renders the
   // mobile (card) layout, so the client's first render must match that
@@ -125,17 +166,19 @@ export default function ReportsPage() {
   const { data: seasons, isLoading: seasonsLoading } = useCropSeasons();
   const { data: parcels, isLoading: parcelsLoading } = useParcels();
 
+  const activeFilters = {
+    seasonId: seasonFilter === ALL_SEASONS_VALUE ? undefined : seasonFilter,
+    parcelId: parcelFilter === ALL_PARCELS_VALUE ? undefined : parcelFilter,
+    from: from || undefined,
+    to: to || undefined,
+  };
+
   const {
     data: report,
     isLoading,
     isError,
     error,
-  } = useReports({
-    seasonId: seasonFilter === ALL_SEASONS_VALUE ? undefined : seasonFilter,
-    parcelId: parcelFilter === ALL_PARCELS_VALUE ? undefined : parcelFilter,
-    from: from || undefined,
-    to: to || undefined,
-  });
+  } = useReports(activeFilters);
 
   const rows = report?.rows ?? [];
   const summary = report?.summary;
@@ -152,14 +195,32 @@ export default function ReportsPage() {
         title="Raporte"
         subtitle="Kosto/njësi, marxhini dhe fitimi për sezonet e tua."
         actions={
-          <Button
-            variant="outline"
-            onClick={() => exportCsv(rows)}
-            disabled={rows.length === 0}
-          >
-            <Download className="h-4 w-4" />
-            Eksporto
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => exportCsv(rows)}
+              disabled={rows.length === 0}
+            >
+              <Download className="h-4 w-4" />
+              CSV
+            </Button>
+            <LoadingButton
+              variant="outline"
+              loading={exportingPdf}
+              disabled={rows.length === 0}
+              onClick={async () => {
+                setExportingPdf(true);
+                try {
+                  await exportPdf(activeFilters);
+                } finally {
+                  setExportingPdf(false);
+                }
+              }}
+            >
+              <FileText className="h-4 w-4" />
+              PDF
+            </LoadingButton>
+          </div>
         }
       />
 

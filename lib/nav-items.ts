@@ -12,7 +12,7 @@ export type NavItem = {
 
 export const navItems: NavItem[] = [
   {
-    href: "/",
+    href: "/dashboard",
     label: "Ballina",
     icon: LayoutDashboard,
     color: entityTheme.dashboard.color,
