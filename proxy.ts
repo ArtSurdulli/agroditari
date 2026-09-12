@@ -16,6 +16,7 @@ export const proxy = auth((req) => {
   const isCronApi = path.startsWith("/api/cron");
   const isApi = path.startsWith("/api") && !isAuthApi && !isCronApi;
   const isPublicPage =
+    path === "/" ||
     path === "/login" ||
     path === "/register" ||
     path.startsWith("/verifo") ||

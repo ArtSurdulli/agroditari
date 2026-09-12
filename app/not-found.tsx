@@ -18,7 +18,7 @@ export default function NotFound() {
         </p>
       </div>
       <Link href="/" className={buttonVariants({ className: "mt-2" })}>
-        Kthehu te ballina
+        Kthehu në fillim
       </Link>
     </div>
   );

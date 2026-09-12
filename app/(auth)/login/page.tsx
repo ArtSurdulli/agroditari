@@ -40,7 +40,7 @@ function LoginForm() {
     const result = await signIn("credentials", {
       email,
       password,
-      redirectTo: "/",
+      redirectTo: "/dashboard",
       redirect: false,
     });
 
@@ -52,7 +52,7 @@ function LoginForm() {
       return;
     }
 
-    window.location.href = "/";
+    window.location.href = "/dashboard";
   }
 
   async function handleResend() {

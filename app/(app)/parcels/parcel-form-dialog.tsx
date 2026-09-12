@@ -19,10 +19,19 @@ import { useCreateParcel, useUpdateParcel } from "@/hooks/use-parcels";
 import { useFarms } from "@/hooks/use-farms";
 import { entityAccentStyle, getEntityTheme } from "@/lib/entity-theme";
 import { parseLocaleDecimal } from "@/lib/decimal";
+import { ariToHectare } from "@/lib/units";
 import type { ApiError } from "@/lib/api/client";
 import type { Parcel } from "@/types/parcel";
 
 const theme = getEntityTheme("parcels");
+
+type AreaUnit = "ha" | "ari";
+
+const areaUnitLabels: Record<AreaUnit, string> = {
+  ha: "ha",
+  ari: "ari",
+};
+const areaUnitValues: AreaUnit[] = ["ha", "ari"];
 
 type ParcelFormDialogProps = {
   open: boolean;
@@ -37,7 +46,8 @@ export function ParcelFormDialog({
 }: ParcelFormDialogProps) {
   const [farmId, setFarmId] = useState("");
   const [name, setName] = useState("");
-  const [areaHa, setAreaHa] = useState("");
+  const [area, setArea] = useState("");
+  const [areaUnit, setAreaUnit] = useState<AreaUnit>("ha");
   const [soilType, setSoilType] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -51,7 +61,10 @@ export function ParcelFormDialog({
     if (open) {
       setFarmId(parcel?.farmId ?? "");
       setName(parcel?.name ?? "");
-      setAreaHa(parcel ? String(parcel.areaHa) : "");
+      // Only ha is stored, so editing always starts from the ha unit —
+      // whatever unit was used to originally enter the area isn't kept.
+      setArea(parcel ? String(parcel.areaHa) : "");
+      setAreaUnit("ha");
       setSoilType(parcel?.soilType ?? "");
       setError(null);
       setFieldErrors({});
@@ -70,20 +83,23 @@ export function ParcelFormDialog({
     setError(null);
     setFieldErrors({});
 
+    const areaValue = parseLocaleDecimal(area);
+    const areaHa = areaUnit === "ari" ? ariToHectare(areaValue) : areaValue;
+
     try {
       if (parcel) {
         await updateParcel.mutateAsync({
           id: parcel.id,
           farmId,
           name,
-          areaHa: parseLocaleDecimal(areaHa),
+          areaHa,
           soilType,
         });
       } else {
         await createParcel.mutateAsync({
           farmId,
           name,
-          areaHa: parseLocaleDecimal(areaHa),
+          areaHa,
           soilType,
         });
       }
@@ -152,21 +168,47 @@ export function ParcelFormDialog({
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="parcel-area">Sipërfaqja (ha)</Label>
-            <Input
-              id="parcel-area"
-              type="number"
-              step="0.01"
-              min="0"
-              value={areaHa}
-              onChange={(e) => setAreaHa(e.target.value)}
-              required
-              placeholder="1.5"
-            />
-            {fieldErrors.areaHa && (
-              <p className="text-sm text-danger">{fieldErrors.areaHa}</p>
-            )}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="parcel-area">Sipërfaqja</Label>
+              <Input
+                id="parcel-area"
+                type="number"
+                step="0.01"
+                min="0"
+                value={area}
+                onChange={(e) => setArea(e.target.value)}
+                required
+                placeholder={areaUnit === "ari" ? "150" : "1.5"}
+              />
+              {fieldErrors.areaHa && (
+                <p className="text-sm text-danger">{fieldErrors.areaHa}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="parcel-area-unit">Njësia</Label>
+              <Select
+                value={areaUnit}
+                onValueChange={(value) =>
+                  setAreaUnit((value as AreaUnit) ?? "ha")
+                }
+                items={areaUnitValues.map((value) => ({
+                  value,
+                  label: areaUnitLabels[value],
+                }))}
+              >
+                <SelectTrigger id="parcel-area-unit" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent entityKey="parcels">
+                  {areaUnitValues.map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {areaUnitLabels[value]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="space-y-1.5">
