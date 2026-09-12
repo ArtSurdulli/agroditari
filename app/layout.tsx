@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
   title: "AgroDitari",
   description: "Menaxhimi i të dhënave bujqësore për fermerë të vegjël.",
   appleWebApp: {
@@ -40,7 +41,7 @@ export default function RootLayout({
   return (
     <html
       lang="sq"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full scroll-smooth antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegistration />
