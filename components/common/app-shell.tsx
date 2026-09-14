@@ -5,11 +5,13 @@ import { QuickAddDesktopButton, QuickAddFab } from "@/components/common/quick-ad
 import { Sidebar } from "@/components/common/sidebar";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMounted } from "@/hooks/use-mounted";
+import type { UserRole } from "@/types/next-auth";
 
 type AppShellProps = {
   user?: {
     name?: string | null;
     email?: string | null;
+    role?: UserRole;
   };
   children: React.ReactNode;
 };

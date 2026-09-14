@@ -90,7 +90,7 @@ export function FarmFormDialog({
               id="farm-location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="P.sh. Korçë"
+              placeholder="P.sh. Vushtrri"
             />
           </div>
 

@@ -9,6 +9,7 @@ datasource db {
 }
 
 enum RoleType {
+  superadmin
   admin
   farmer
 }
@@ -16,6 +17,7 @@ enum RoleType {
 enum UserStatus {
   pending
   active
+  disabled
 }
 
 enum SeasonStatus {
