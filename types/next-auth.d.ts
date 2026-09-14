@@ -1,24 +1,27 @@
 import { DefaultSession } from "next-auth";
 
+export type UserRole = "superadmin" | "admin" | "farmer";
+export type UserAccountStatus = "pending" | "active" | "disabled";
+
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-      role: string;
-      status: "pending" | "active";
+      role: UserRole;
+      status: UserAccountStatus;
     } & DefaultSession["user"];
   }
   interface User {
-    role: string;
-    status: "pending" | "active";
+    role: UserRole;
+    status: UserAccountStatus;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
-    role: string;
-    status: "pending" | "active";
+    role: UserRole;
+    status: UserAccountStatus;
   }
 }
 
@@ -29,7 +32,7 @@ declare module "next-auth/jwt" {
 declare module "@auth/core/jwt" {
   interface JWT {
     id?: string;
-    role: string;
-    status: "pending" | "active";
+    role: UserRole;
+    status: UserAccountStatus;
   }
 }

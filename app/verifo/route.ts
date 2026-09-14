@@ -19,7 +19,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (user.status !== "active") {
+  // Only a `pending` account is activated by clicking the link. A `disabled`
+  // account was deactivated by an admin — an old/reused verification link
+  // must NOT undo that; only an admin can bring it back to active.
+  if (user.status === "disabled") {
+    return NextResponse.redirect(new URL("/login?disabled=1", request.url));
+  }
+
+  if (user.status === "pending") {
     await prisma.user.update({
       where: { email },
       data: { status: "active", emailVerifiedAt: new Date() },

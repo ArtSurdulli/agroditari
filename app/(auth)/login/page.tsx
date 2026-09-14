@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { Tractor, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { resendVerification } from "../actions";
 
@@ -12,10 +12,22 @@ function LoginForm() {
   const verified = searchParams.get("verified") === "1";
   const verificationFailed = searchParams.get("error") === "verifikimi_deshtoi";
   const resetSuccess = searchParams.get("reset") === "1";
+  // Set by /verifo when a disabled account clicks an old verification link —
+  // the link does NOT reactivate them (see app/verifo/route.ts).
+  const accountDisabledFromLink = searchParams.get("disabled") === "1";
+
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
+  const DISABLED_MESSAGE = supportEmail
+    ? `Llogaria juaj është çaktivizuar. Ju lutemi kontaktoni administratorin në ${supportEmail}.`
+    : "Llogaria juaj është çaktivizuar. Ju lutemi kontaktoni administratorin.";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // True only when the login attempt failed specifically because the
+  // account is disabled — suppresses the "resend verification" button,
+  // since resending can never reactivate a disabled account.
+  const [accountDisabled, setAccountDisabled] = useState(false);
   const [pending, setPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -35,6 +47,7 @@ function LoginForm() {
     e.preventDefault();
     setError(null);
     setResendMessage(null);
+    setAccountDisabled(false);
     setPending(true);
 
     const result = await signIn("credentials", {
@@ -45,14 +58,29 @@ function LoginForm() {
     });
 
     if (result?.error) {
-      setError(
-        "Email/fjalëkalim i gabuar, ose llogaria nuk është verifikuar ende."
-      );
+      // Only a `code: "disabled"` result means credentials were correct AND
+      // the account is disabled — anything else (wrong password, unknown
+      // email, still-pending account) gets the same generic message as
+      // before, so those cases stay indistinguishable from each other.
+      if (result.code === "disabled") {
+        setError(DISABLED_MESSAGE);
+        setAccountDisabled(true);
+      } else {
+        setError(
+          "Email/fjalëkalim i gabuar, ose llogaria nuk është verifikuar ende."
+        );
+      }
       setPending(false);
       return;
     }
 
-    window.location.href = "/dashboard";
+    // Superadmin's default landing is /admin instead of the farmer
+    // dashboard — a one-time redirect decision made here at login, not a
+    // standing lock: they can still open /dashboard (or any farmer page)
+    // manually afterwards, same as before.
+    const session = await getSession();
+    window.location.href =
+      session?.user?.role === "superadmin" ? "/admin" : "/dashboard";
   }
 
   async function handleResend() {
@@ -94,6 +122,12 @@ function LoginForm() {
         {verificationFailed && (
           <p className="mt-6 rounded-lg bg-danger-light px-4 py-3 text-center text-sm font-semibold text-danger">
             Verifikimi dështoi. Provo përsëri ose regjistrohu sërish.
+          </p>
+        )}
+
+        {accountDisabledFromLink && (
+          <p className="mt-6 rounded-lg bg-danger-light px-4 py-3 text-center text-sm font-semibold text-danger">
+            {DISABLED_MESSAGE}
           </p>
         )}
 
@@ -165,18 +199,22 @@ function LoginForm() {
           {error && (
             <div className="space-y-2">
               <p className="text-sm text-danger">{error}</p>
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={resendPending || resendCooldown > 0 || !email}
-                className="h-11 w-full rounded-lg border border-primary text-sm font-semibold text-primary transition-colors hover:bg-primary-light disabled:opacity-60"
-              >
-                {resendCooldown > 0
-                  ? `Ridërgo email-in e verifikimit (${resendCooldown}s)`
-                  : "Ridërgo email-in e verifikimit"}
-              </button>
-              {resendMessage && (
-                <p className="text-sm text-text-secondary">{resendMessage}</p>
+              {!accountDisabled && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resendPending || resendCooldown > 0 || !email}
+                    className="h-11 w-full rounded-lg border border-primary text-sm font-semibold text-primary transition-colors hover:bg-primary-light disabled:opacity-60"
+                  >
+                    {resendCooldown > 0
+                      ? `Ridërgo email-in e verifikimit (${resendCooldown}s)`
+                      : "Ridërgo email-in e verifikimit"}
+                  </button>
+                  {resendMessage && (
+                    <p className="text-sm text-text-secondary">{resendMessage}</p>
+                  )}
+                </>
               )}
             </div>
           )}

@@ -7,8 +7,10 @@ import { ChevronLeft, ChevronRight, LogOut, Tractor } from "lucide-react";
 import { signOutAction } from "@/app/(app)/actions";
 import { useMounted } from "@/hooks/use-mounted";
 import { useReminders } from "@/hooks/use-reminders";
+import { getAdminRoleTheme, type AdminRole } from "@/lib/admin-theme";
 import { navItems } from "@/lib/nav-items";
 import { cn } from "@/lib/utils";
+import type { UserRole } from "@/types/next-auth";
 
 const STORAGE_KEY = "agroditari:sidebar-collapsed";
 
@@ -31,6 +33,7 @@ type SidebarProps = {
   user?: {
     name?: string | null;
     email?: string | null;
+    role?: UserRole;
   };
 };
 
@@ -40,6 +43,14 @@ export function Sidebar({ user }: SidebarProps) {
   const [storedCollapsed, setStoredCollapsed] = useState(() =>
     getStoredCollapsed()
   );
+
+  // Admin/superadmin only — farmers never see this link. Themed with the
+  // same blue/red the /admin section itself uses, so it reads as a preview
+  // of where the link goes.
+  const isAdminRole = user?.role === "admin" || user?.role === "superadmin";
+  const adminTheme = isAdminRole
+    ? getAdminRoleTheme(user!.role as AdminRole)
+    : null;
 
   // Before mount, always render expanded so the first client paint matches
   // the server-rendered HTML exactly (avoids a hydration mismatch); the
@@ -138,6 +149,31 @@ export function Sidebar({ user }: SidebarProps) {
             </Link>
           );
         })}
+
+        {isAdminRole && adminTheme && (
+          <div className="mt-2 border-t border-border pt-2">
+            <Link
+              href="/admin"
+              title={collapsed ? "Paneli i adminit" : undefined}
+              className={cn(
+                "flex items-center gap-3 rounded-lg border-l-[3px] border-transparent px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-page",
+                collapsed && "justify-center px-0"
+              )}
+              style={
+                pathname.startsWith("/admin")
+                  ? {
+                      backgroundColor: adminTheme.color.tint,
+                      borderLeftColor: adminTheme.color.border,
+                      color: adminTheme.color.textStrong,
+                    }
+                  : undefined
+              }
+            >
+              <adminTheme.icon className="h-5 w-5 shrink-0" />
+              {!collapsed && <span className="truncate">Paneli i adminit</span>}
+            </Link>
+          </div>
+        )}
       </nav>
 
       <div className="border-t border-border p-3">
