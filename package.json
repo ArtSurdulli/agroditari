@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "postinstall": "prisma generate",
-    "seed:test": "tsx prisma/seed-test.ts"
+    "seed:test": "tsx prisma/seed-test.ts",
+    "seed:superadmin": "tsx prisma/seed-superadmin.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

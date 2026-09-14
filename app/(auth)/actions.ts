@@ -23,7 +23,12 @@ export async function resendVerification(
 
   const user = await prisma.user.findUnique({ where: { email } });
 
-  if (!user || user.status === "active") {
+  // Only a `pending` (never verified) account can resend/verify — an
+  // `active` account has nothing to resend, and a `disabled` account was
+  // deactivated by an admin and must NOT be able to self-reactivate through
+  // this flow. Allow-listing "pending" (instead of block-listing "active")
+  // means a future status added here defaults to refused, not allowed.
+  if (!user || user.status !== "pending") {
     return GENERIC_SUCCESS;
   }
 

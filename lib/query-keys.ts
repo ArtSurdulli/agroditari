@@ -61,4 +61,12 @@ export const keys = {
       ["reminders", "list", params ?? {}] as const,
     detail: (id: string) => ["reminders", "detail", id] as const,
   },
+  admin: {
+    stats: ["admin", "stats"] as const,
+    users: {
+      all: ["admin", "users"] as const,
+      list: (params?: { role?: string; q?: string; page?: number; pageSize?: number }) =>
+        ["admin", "users", "list", params ?? {}] as const,
+    },
+  },
 } as const;
